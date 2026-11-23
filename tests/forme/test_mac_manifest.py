@@ -99,17 +99,27 @@ class MacManifestOptionalDependencyTests(unittest.TestCase):
 
     def test_openal_libraries_remain_independent_of_bugsplat(self):
         self.assertTrue(self.openal_guards, "manifest must retain an OpenAL option guard")
-        openal_paths = [
-            node for node in ast.walk(self.tree)
-            if call_name(node) == "path"
-            and any(lib in ast.dump(node) for lib in ("libopenal.dylib", "libalut.dylib"))
-        ]
-        self.assertEqual(2, len(openal_paths), "both OpenAL runtime libraries must be staged")
-        for node in openal_paths:
-            self.assertTrue(self.has_guard_ancestor(node, self.openal_guards))
+        openal_loops = []
+        for guard in self.openal_guards:
+            for node in ast.walk(guard):
+                if not isinstance(node, ast.For) or not isinstance(node.iter, ast.Tuple):
+                    continue
+                values = {
+                    item.value for item in node.iter.elts
+                    if isinstance(item, ast.Constant) and isinstance(item.value, str)
+                }
+                if {"libopenal.dylib", "libalut.dylib"}.issubset(values):
+                    openal_loops.append((guard, node))
+        self.assertTrue(openal_loops, "both OpenAL runtime libraries must be staged")
+        for guard, loop in openal_loops:
+            self.assertTrue(self.has_guard_ancestor(loop, self.openal_guards))
             self.assertFalse(
-                self.has_guard_ancestor(node, self.bugsplat_guards),
+                self.has_guard_ancestor(loop, self.bugsplat_guards),
                 "OpenAL must not depend on the optional BugSplat SDK",
+            )
+            self.assertTrue(
+                any(call_name(node) == "path" for node in ast.walk(loop)),
+                "OpenAL libraries must be copied into the app bundle",
             )
 
 
