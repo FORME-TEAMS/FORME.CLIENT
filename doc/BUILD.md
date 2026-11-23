@@ -13,8 +13,8 @@
 ```sh
 gh auth login
 gh auth setup-git
-gh repo clone amwbru-alt/ForMe.World.Client
-cd ForMe.World.Client
+gh repo clone FORME-TEAMS/FORME.CLIENT
+cd FORME.CLIENT
 git switch main
 git rev-parse HEAD
 ```
