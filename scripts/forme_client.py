@@ -90,6 +90,38 @@ def build(jobs):
     run(['cmake', '--build', directory, '--config', 'Release', '--parallel', str(jobs)], environment())
 
 
+
+def verify_universal_app(app):
+    """Reject an app bundle containing any thin Mach-O binary."""
+    required = {'arm64', 'x86_64'}
+    checked = 0
+    for root, _, files in os.walk(app):
+        for name in files:
+            path = Path(root) / name
+            description = subprocess.run(
+                ['file', '-b', path], capture_output=True, text=True, check=True
+            ).stdout
+            if 'Mach-O' not in description:
+                continue
+            result = subprocess.run(
+                ['lipo', '-archs', path], capture_output=True, text=True
+            )
+            if result.returncode:
+                raise ValueError(f'Не удалось проверить архитектуры {path}: {result.stderr.strip()}')
+            architectures = set(result.stdout.split())
+            missing = required - architectures
+            if missing:
+                raise ValueError(
+                    f'В {path} отсутствуют архитектуры: {", ".join(sorted(missing))}; '
+                    f'обнаружены: {", ".join(sorted(architectures))}'
+                )
+            checked += 1
+    if checked == 0:
+        raise ValueError('В приложении не найдено ни одного Mach-O бинарника.')
+    print(f'ForMe.World: Universal Binary подтверждён для {checked} Mach-O файлов '
+          '(arm64 + x86_64).')
+
+
 def bundle():
     if sys.platform != 'darwin':
         raise ValueError('Команда bundle пока предназначена для macOS; на других системах доступна build.')
@@ -105,10 +137,12 @@ def bundle():
     if stage.exists():
         shutil.rmtree(stage)
     run(['ditto', app, stage])
+    verify_universal_app(stage)
     run(['codesign', '--force', '--deep', '--sign', '-', stage])
-    run(['codesign', '--verify', '--deep', stage])
+    run(['codesign', '--verify', '--deep', '--strict', stage])
     archive.unlink(missing_ok=True)
     run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', stage, archive])
+    run(['unzip', '-t', archive])
     print('ForMe.World: архив готов:', archive)
 
 
