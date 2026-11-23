@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<floater name="inspect_avatar">
-
-	<button label="Nowy znajomy" name="add_friend_btn"/>
-	<button label="Napisz" name="im_btn"/>
-	<button label="Profil" name="view_profile_btn"/>
-
-</floater>
