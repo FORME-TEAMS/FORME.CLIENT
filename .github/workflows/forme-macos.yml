@@ -56,7 +56,7 @@ jobs:
           python scripts/forme_client.py build --jobs 3 2>&1 | tee forme-macos-logs/build.log
       - name: Bundle ForMe.World
         run: python scripts/forme_client.py bundle
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ForMe.World-macOS
           path: dist/ForMe.World-macOS-universal.zip
@@ -65,7 +65,7 @@ jobs:
           compression-level: 0
       - name: Upload diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ForMe.World-macOS-logs
           path: |
