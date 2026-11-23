@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<panel label="Leute" name="people_panel">
+  <string name="no_recent_people" value="Hier sind keine Leute. Sie suchen nach Leuten? Verwenden Sie die [fmw:///app/search/people Suche] oder die [fmw:///app/worldmap Karte]." />
+  <string name="no_filtered_recent_people" value="Sie haben nicht das Richtige gefunden? Versuchen Sie es mit der [fmw:///app/search/people/[SEARCH_TERM] Suche]." />
+  <string name="no_one_near" value="Es ist niemand in der Nähe. Sie suchen nach Leuten? Verwenden Sie die [fmw:///app/search/people Suche] oder die [fmw:///app/worldmap Karte]." />
+  <string name="no_one_filtered_near" value="Sie haben nicht das Richtige gefunden? Versuchen Sie es mit der [fmw:///app/search/people/[SEARCH_TERM] Suche]." />
+  <string name="no_friends_online" value="Keine Freunde online" />
+  <string name="no_friends" value="Keine Freunde" />
+	<string name="no_friends_msg">
+		Verwenden Sie die [fmw:///app/search/people Suche], um Freunde zu finden. Oder klicken Sie mit rechts auf einen Einwohner und fügen Sie diesen als Freund hinzu.
+Sie suchen nach Leuten? Verwenden Sie die [fmw:///app/worldmap Karte].
+	</string>
+	<string name="no_filtered_friends_msg">
+		Sie haben nicht das Richtige gefunden? Versuchen Sie es mit der [fmw:///app/search/people/[SEARCH_TERM] Suche].
+	</string>
+	<string name="people_filter_label" value="Filter Leute" />
+	<string name="groups_filter_label" value="Filter Gruppen" />
+  <string name="no_filtered_groups_msg" value="Sie haben nicht das Richtige gefunden? Versuchen Sie es mit der [fmw:///app/search/groups/[SEARCH_TERM] Suche]." />
+  <string name="no_groups_msg" value="Suchen Sie nach Gruppen? Versuchen Sie es mit der [fmw:///app/search/groups Suche]." />
+  <string name="MiniMapToolTipMsg" value="[REGION] (Doppelklicken, um Karte zu öffnen; Umschalttaste gedrückt halten und ziehen, um zu schwenken)" />
+  <string name="AltMiniMapToolTipMsg" value="[REGION] (Doppelklicken, um zu teleportieren; Umschalttaste gedrückt halten und ziehen, um zu schwenken)" />
+	<string name="empty_list">
+		Dieses Kontakt-Set ist leer.
+	</string>
+	<string name="no_sets">
+		Keine Kontakt-Sets
+	</string>
+	<string name="all_sets">
+		Alle Kontakt-Sets
+	</string>
+	<string name="pseudonyms">
+		Aliase
+	</string>
+	<tab_container name="tabs">
+		<panel label="In der Nähe" name="nearby_panel">
+				</panel>
+    <panel label="Freunde" name="friends_panel" />
+    <panel label="Gruppen" name="groups_panel" />
+    <panel label="Aktuell" name="recent_panel" />
+    <panel label="Ignoriert" name="blocked_panel" />
+    <panel label="Kontakt-Sets" name="contact_sets_panel" />
+	</tab_container>
+</panel>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<floater name="worldmap" title="MAPA DEL MUNDO">
+  <text name="forme_map_title">MAPA DEL MUNDO</text>
+</floater>

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<floater name="camera_floater" title="KAMERA DENETİMLERİ">
+	<floater.string name="rotate_tooltip">
+		Odak Etrafında Kamerayı Döndür
+	</floater.string>
+	<floater.string name="zoom_tooltip">
+		Kamerayı Odağa Yakınlaştır
+	</floater.string>
+	<floater.string name="move_tooltip">
+		Kamerayı Yukarı ve Aşağı, Sola ve Sağa Hareket Ettir
+	</floater.string>
+	<floater.string name="free_mode_title">
+		Nesneyi Göster
+	</floater.string>
+</floater>

@@ -1,0 +1,9 @@
+{
+  "product": "ForMe.World",
+  "source_commit": "9f0805b70e3895e59422dba1a8c70910b7b4074d",
+  "source_branch": "work/rws005-v2-region-context-20261118",
+  "snapshot_date": "2026-11-20",
+  "history": "Independent repository initialized from the selected source snapshot",
+  "compiler_repairs_from": "c4be8a8da7b30a8eeefae7b7fe036181c33ae5d4",
+  "preserved": "Original source copyright, license notices and contributor records"
+}
