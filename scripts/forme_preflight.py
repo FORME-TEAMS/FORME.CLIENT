@@ -33,6 +33,24 @@ def main():
     errors = []
     tracked = set(subprocess.check_output(
         ['git', 'ls-files'], cwd=ROOT, text=True).splitlines())
+    # Character definitions are runtime-critical viewer assets referenced by CMake.
+    # Keep them in Git so a source-only checkout can configure and package the viewer.
+    character_assets = (
+        'indra/newview/character/attentions.xml',
+        'indra/newview/character/attentionsN.xml',
+        'indra/newview/character/avatar_lad.xml',
+        'indra/newview/character/avatar_skeleton.xml',
+        'indra/newview/character/genepool.xml',
+    )
+    for rel in character_assets:
+        if rel not in tracked:
+            errors.append(f'missing required character asset {rel}')
+        else:
+            try:
+                ET.parse(ROOT / rel)
+            except (ET.ParseError, OSError) as error:
+                errors.append(f'invalid character asset {rel}: {error}')
+
     # Check literal entries in source/header lists against the complete Git tree,
     # including in sparse working copies. Generated variable paths are skipped.
     for rel in ('indra/cmake/CMakeLists.txt', 'indra/newview/CMakeLists.txt'):
