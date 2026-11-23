@@ -1360,51 +1360,54 @@ class Darwin_x86_64_Manifest(ViewerManifest):
                                 ):
                         self.path(libfile)
 
-                    # According to Apple Technical Note TN2206:
-                    # https://developer.apple.com/library/archive/technotes/tn2206/_index.html#//apple_ref/doc/uid/DTS40007919-CH1-TNTAG207
-                    # "If an app uses @rpath or an absolute path to link to a
-                    # dynamic library outside of the app, the app will be
-                    # rejected by Gatekeeper. ... Neither the codesign nor the
-                    # spctl tool will show the error."
-                    # (Thanks, Apple. Maybe fix spctl to warn?)
-                    # The BugsplatMac framework embeds @rpath, which is
-                    # causing scary Gatekeeper popups at viewer start. Work
-                    # around this by changing the reference baked into our
-                    # viewer. The install_name_tool -change option needs the
-                    # previous value. Instead of guessing -- which might
-                    # silently be defeated by a BugSplat SDK update that
-                    # changes their baked-in @rpath -- ask for the path
-                    # stamped into the framework.
-                    # Let exception, if any, propagate -- if this doesn't
-                    # work, we need the build to noisily fail!
-                    oldpath = subprocess.check_output(
-                        ['objdump', '--macho', '--dylib-id', '--non-verbose',
-                         os.path.join(relpkgdir, "HockeySDK.framework", "HockeySDK")],
-                        text=True
-                        ).splitlines()[-1]  # take the last line of output
-                    self.run_command(
-                        ['install_name_tool', '-change', oldpath,
-                         '@executable_path/../Frameworks/HockeySDK.framework/HockeySDK',
-                         executable])
-                    oldpath = subprocess.check_output(
-                        ['objdump', '--macho', '--dylib-id', '--non-verbose',
-                         os.path.join(relpkgdir, "CrashReporter.framework", "CrashReporter")],
-                        text=True
-                        ).splitlines()[-1]  # take the last line of output
-                    self.run_command(
-                        ['install_name_tool', '-change', oldpath,
-                         '@executable_path/../Frameworks/CrashReporter.framework/CrashReporter',
-                         executable])
-                    oldpath = subprocess.check_output(
-                        ['objdump', '--macho', '--dylib-id', '--non-verbose',
-                         os.path.join(relpkgdir, "BugsplatMac.framework", "BugsplatMac")],
-                        text=True
-                        ).splitlines()[-1]  # take the last line of output
-                    self.run_command(
-                        ['install_name_tool', '-change', oldpath,
-                         '@executable_path/../Frameworks/BugsplatMac.framework/BugsplatMac',
-                         executable])
-
+                    # BugSplat is optional. Do not inspect or rewrite its framework
+                    # install names when the build was configured without BugSplat.
+                    if self.args.get('bugsplat'):
+                        # According to Apple Technical Note TN2206:
+                        # https://developer.apple.com/library/archive/technotes/tn2206/_index.html#//apple_ref/doc/uid/DTS40007919-CH1-TNTAG207
+                        # "If an app uses @rpath or an absolute path to link to a
+                        # dynamic library outside of the app, the app will be
+                        # rejected by Gatekeeper. ... Neither the codesign nor the
+                        # spctl tool will show the error."
+                        # (Thanks, Apple. Maybe fix spctl to warn?)
+                        # The BugsplatMac framework embeds @rpath, which is
+                        # causing scary Gatekeeper popups at viewer start. Work
+                        # around this by changing the reference baked into our
+                        # viewer. The install_name_tool -change option needs the
+                        # previous value. Instead of guessing -- which might
+                        # silently be defeated by a BugSplat SDK update that
+                        # changes their baked-in @rpath -- ask for the path
+                        # stamped into the framework.
+                        # Let exception, if any, propagate -- if this doesn't
+                        # work, we need the build to noisily fail!
+                        oldpath = subprocess.check_output(
+                            ['objdump', '--macho', '--dylib-id', '--non-verbose',
+                             os.path.join(relpkgdir, "HockeySDK.framework", "HockeySDK")],
+                            text=True
+                            ).splitlines()[-1]  # take the last line of output
+                        self.run_command(
+                            ['install_name_tool', '-change', oldpath,
+                             '@executable_path/../Frameworks/HockeySDK.framework/HockeySDK',
+                             executable])
+                        oldpath = subprocess.check_output(
+                            ['objdump', '--macho', '--dylib-id', '--non-verbose',
+                             os.path.join(relpkgdir, "CrashReporter.framework", "CrashReporter")],
+                            text=True
+                            ).splitlines()[-1]  # take the last line of output
+                        self.run_command(
+                            ['install_name_tool', '-change', oldpath,
+                             '@executable_path/../Frameworks/CrashReporter.framework/CrashReporter',
+                             executable])
+                        oldpath = subprocess.check_output(
+                            ['objdump', '--macho', '--dylib-id', '--non-verbose',
+                             os.path.join(relpkgdir, "BugsplatMac.framework", "BugsplatMac")],
+                            text=True
+                            ).splitlines()[-1]  # take the last line of output
+                        self.run_command(
+                            ['install_name_tool', '-change', oldpath,
+                             '@executable_path/../Frameworks/BugsplatMac.framework/BugsplatMac',
+                             executable])
+    
                 # NOTE: the -S argument to strip causes it to keep
                 # enough info for annotated backtraces (i.e. function
                 # names in the crash log). 'strip' with no arguments
