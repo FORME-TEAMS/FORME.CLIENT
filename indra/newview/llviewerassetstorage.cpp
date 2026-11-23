@@ -182,15 +182,6 @@ void LLViewerAssetStorage::storeAssetData(
                 }
                 return;
             }
-            else
-            {
-                // LLAssetStorage metric: Successful Request
-                S32 size = LLFileSystem::getFileSize(asset_id, asset_type);
-                const char *message = "Added to upload queue";
-                reportMetric( asset_id, asset_type, LLStringUtil::null, LLUUID::null, size, MR_OKAY, __FILE__, __LINE__, message );
-
-            }
-
             // Read the data from the cache if it'll fit in this packet.
             if (asset_size + 100 < MTUBYTES)
             {
@@ -220,6 +211,12 @@ void LLViewerAssetStorage::storeAssetData(
                 buffer[0] = 0;
                 asset_size = 0;
             }
+            // Record success only after the cached payload has been validated.
+            S32 size = LLFileSystem::getFileSize(asset_id, asset_type);
+            const char *message = "Added to upload queue";
+            reportMetric(asset_id, asset_type, LLStringUtil::null, LLUUID::null,
+                         size, MR_OKAY, __FILE__, __LINE__, message);
+
             // Queue only after the cached payload has been validated. On a
             // read failure the request must not remain pending for a later
             // AssetUploadComplete message that can never belong to this send.
