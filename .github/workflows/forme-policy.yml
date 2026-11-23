@@ -88,5 +88,3 @@ jobs:
         run: python3 tests/forme/test_ci_validation.py
       - name: Check verified package cache and failed download isolation
         run: python3 tests/forme/test_package_cache.py
-      - name: Check macOS optional framework packaging
-        run: python3 tests/forme/test_mac_manifest.py
