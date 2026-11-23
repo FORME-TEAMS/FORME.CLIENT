@@ -40,6 +40,12 @@ jobs:
           echo "PYTHON=$(command -v python)" >> "$GITHUB_ENV"
           mkdir -p forme-macos-logs
           xcodebuild -version
+      - name: Validate source and macOS packaging before long build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/forme_preflight.py
+          python3 tests/forme/test_mac_manifest.py
       - uses: actions/cache@v4
         with:
           path: .autobuild-installables
@@ -49,6 +55,13 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/forme_client.py configure 2>&1 | tee forme-macos-logs/configure.log
+      - name: Verify configured macOS optional dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -qx 'USE_BUGSPLAT:BOOL=OFF' build-darwin-universal/CMakeCache.txt
+          grep -qx 'USE_OPENAL:BOOL=ON' build-darwin-universal/CMakeCache.txt
+          python3 tests/forme/test_mac_manifest.py
       - name: Compile universal application
         shell: bash
         run: |
