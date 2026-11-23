@@ -8,7 +8,7 @@
 
 ```sh
 gh auth login
-gh workflow run forme-macos.yml --repo FORME-TEAMS/FORME.CLIENT --ref main
+gh workflow run forme-macos.yml --repo FORME-TEAMS/FORME.CLIENT --ref fix/forme-no-voice-preflight-missing-asset
 gh run list --repo FORME-TEAMS/FORME.CLIENT --workflow forme-macos.yml --limit 5
 ```
 
