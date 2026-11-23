@@ -189,14 +189,6 @@ void LLViewerAssetStorage::storeAssetData(
                 const char *message = "Added to upload queue";
                 reportMetric( asset_id, asset_type, LLStringUtil::null, LLUUID::null, size, MR_OKAY, __FILE__, __LINE__, message );
 
-                if(is_priority)
-                {
-                    mPendingUploads.push_front(req);
-                }
-                else
-                {
-                    mPendingUploads.push_back(req);
-                }
             }
 
             // Read the data from the cache if it'll fit in this packet.
@@ -214,6 +206,7 @@ void LLViewerAssetStorage::storeAssetData(
                 {
                     LL_WARNS("AssetStorage") << "Probable corruption in cache file, aborting store asset data" << LL_ENDL;
 
+                    delete req;
                     if (callback)
                     {
                         callback(asset_id, user_data, LL_ERR_ASSET_REQUEST_NONEXISTENT_FILE, LLExtStat::CACHE_CORRUPT);
@@ -227,6 +220,18 @@ void LLViewerAssetStorage::storeAssetData(
                 buffer[0] = 0;
                 asset_size = 0;
             }
+            // Queue only after the cached payload has been validated. On a
+            // read failure the request must not remain pending for a later
+            // AssetUploadComplete message that can never belong to this send.
+            if (is_priority)
+            {
+                mPendingUploads.push_front(req);
+            }
+            else
+            {
+                mPendingUploads.push_back(req);
+            }
+
             mMessageSys->newMessageFast(_PREHASH_AssetUploadRequest);
             mMessageSys->nextBlockFast(_PREHASH_AssetBlock);
             mMessageSys->addUUIDFast(_PREHASH_TransactionID, tid);
