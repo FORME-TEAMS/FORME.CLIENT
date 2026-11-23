@@ -152,6 +152,7 @@ def main():
                         str(ROOT / 'tests/forme/stream_url_test.cpp'), '-o', str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_no_voice.py')])
+    subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/test_mac_manifest.py')])
 
     if errors:
         print('\n'.join(errors), file=sys.stderr)
