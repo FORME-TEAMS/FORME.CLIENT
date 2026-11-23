@@ -30,7 +30,11 @@ for path in (NV / 'installers/windows').glob('*.nsi'):
     assert not re.search(r'vivox|slvoice|webrtc', source, re.I), path
 avatar = (NV / 'llvoavatar.cpp').read_text() + (NV / 'llvoavatar.h').read_text()
 assert not re.search(r'lip.?sync|mOohMorph|mAahMorph', avatar, re.I)
-assert 'Lipsync_' not in (NV / 'character/avatar_lad.xml').read_text()
+# Some viewer source distributions do not ship avatar_lad.xml. Inspect every
+# shipped avatar definition when the character assets are present instead of
+# requiring one legacy asset path to exist in every checkout.
+for path in (NV / 'character').rglob('*.xml'):
+    assert 'Lipsync_' not in path.read_text(errors='replace'), path
 for path in NV.glob('*.cpp'):
     assert 'flagReservedLegacy' not in path.read_text(errors='replace'), path
 assert 'body["allow_voice_chat"] = false;' in (NV / 'llestateinfomodel.cpp').read_text()
