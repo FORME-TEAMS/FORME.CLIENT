@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<panel label="Persone" name="people_panel">
+  <string name="no_recent_people" value="Nessuna persona recente. Stai cercando persone da frequentare? Prova la [fmw:///app/search/people Ricerca] o la [fmw:///app/worldmap Mappa del mondo]." />
+  <string name="no_filtered_recent_people" value="Non riesci a trovare quello che cerchi? Prova [fmw:///app/search/people/[SEARCH_TERM] Cerca]." />
+  <string name="no_one_near" value="Nessuno vicino. Stai cercando persone da frequentare? Prova a vedere la [fmw:///app/search/people Ricerca] o la [fmw:///app/worldmap Mappa del mondo]." />
+  <string name="no_one_filtered_near" value="Non riesci a trovare quello che cerchi? Prova [fmw:///app/search/people/[SEARCH_TERM] Cerca]." />
+  <string name="no_friends_online" value="Nessun amico online" />
+  <string name="no_friends" value="Nessun amico" />
+	<string name="no_friends_msg">
+		Per trovare amici, utilizza [fmw:///app/search/people Cerca] oppure fai clic col tasto destro del mouse su un residente per aggiungerlo come amico.
+Stai cercando persone da frequentare? Prova la [fmw:///app/worldmap Mappa del mondo].
+	</string>
+	<string name="no_filtered_friends_msg">
+		Non riesci a trovare quello che cerchi? Prova [fmw:///app/search/people/[SEARCH_TERM] Cerca].
+	</string>
+	<string name="people_filter_label" value="Filtra persone" />
+	<string name="groups_filter_label" value="Filtra gruppi" />
+  <string name="no_filtered_groups_msg" value="Non riesci a trovare quello che cerchi? Prova [fmw:///app/search/groups/[SEARCH_TERM] Cerca]." />
+  <string name="no_groups_msg" value="Stai cercando gruppi di cui far parte? Prova [fmw:///app/search/groups Cerca]." />
+  <string name="MiniMapToolTipMsg" value="[REGION](Fai doppio clic per aprire la mappa, premi il tasto Maiusc e trascina per la panoramica)" />
+  <string name="AltMiniMapToolTipMsg" value="[REGION](Fai doppio clic per teleport, premi il tasto Maiusc e trascina per la panoramica)" />
+  <string name="GroupCountWithInfo" value="Fai parte di [COUNT] gruppi, puoi aderire ad altri [REMAINING].  [fmw:/// Cerchi altro?]" />
+	<string name="avatar_name_count" value="Nome [[TOTAL] / [IN_REGION] / [IN_CHAT_RANGE]]" />
+	<panel.string name="empty_list">
+		Set di contatti vuoto.
+	</panel.string>
+	<panel.string name="no_sets">
+		Nessun set
+	</panel.string>
+	<panel.string name="all_sets">
+		Tutti i set
+	</panel.string>
+	<panel.string name="pseudonyms">
+		Alias
+	</panel.string>
+	<tab_container name="tabs">
+		<panel label="Nelle Vicinanze" name="nearby_panel">
+		</panel>
+		<panel label="Recenti" name="recent_panel" />
+		<panel label="Bloccati" name="blocked_panel" />
+	</tab_container>
+</panel>

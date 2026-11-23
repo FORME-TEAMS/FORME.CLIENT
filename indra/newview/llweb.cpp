@@ -1,0 +1,211 @@
+/**
+ * @file llweb.cpp
+ * @brief Functions dealing with web browsers
+ * @author James Cook
+ *
+ * $LicenseInfo:firstyear=2006&license=viewerlgpl$
+ * Second Life Viewer Source Code
+ * Copyright (C) 2010, Linden Research, Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation;
+ * version 2.1 of the License only.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Linden Research, Inc., 945 Battery Street, San Francisco, CA  94111  USA
+ * $/LicenseInfo$
+ */
+
+#include "llviewerprecompiledheaders.h"
+#include "formeurlpolicy.h"
+#include "formeviewerdata.h"
+
+#include "llweb.h"
+
+// Library includes
+#include "llwindow.h"   // spawnWebBrowser()
+
+#include "llagent.h"
+#include "llappviewer.h"
+#include "llfloaterreg.h"
+#include "lllogininstance.h"
+#include "llparcel.h"
+#include "llsd.h"
+#include "llui.h"
+#include "lluri.h"
+#include "llversioninfo.h"
+#include "llviewercontrol.h"
+#include "llviewernetwork.h"
+#include "llviewerparcelmgr.h"
+#include "llviewerregion.h"
+#include "llviewerwindow.h"
+#include "llnotificationsutil.h"
+
+bool on_load_url_external_response(const LLSD& notification, const LLSD& response, bool async );
+
+
+// static
+void LLWeb::loadURL(const std::string& url, const std::string&, const std::string& uuid)
+{
+    loadURLExternal(url, uuid);
+}
+
+// Compatibility entry point for existing callers.
+void LLWeb::loadURLInternal(const std::string& url, const std::string&, const std::string& uuid, bool)
+{
+    loadURLExternal(url, uuid);
+}
+
+// static
+void LLWeb::loadURLExternal(const std::string& url, const std::string& uuid)
+{
+    if (ForMeURL::blockedWeb(url) && !ForMeViewerData::allowedDownload(url)) return;
+    loadURLExternal(url, true, uuid);
+}
+
+// static
+void LLWeb::loadURLExternal(const std::string& url, bool async, const std::string& uuid)
+{
+    if (ForMeURL::blockedWeb(url) && !ForMeViewerData::allowedDownload(url)) return;
+
+    if(gSavedSettings.getBOOL("DisableExternalBrowser"))
+    {
+        // Don't open an external browser under any circumstances.
+        LL_WARNS() << "Blocked attempt to open external browser." << LL_ENDL;
+        return;
+    }
+
+    LLSD payload;
+    payload["url"] = url;
+    LLSD args;
+    args["UNTRUSTED_URL"] = url;
+    LLNotificationsUtil::add( "WebLaunchExternalTarget", args, payload, boost::bind(on_load_url_external_response, _1, _2, async));
+}
+
+// static
+bool on_load_url_external_response(const LLSD& notification, const LLSD& response, bool async )
+{
+    S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
+    if ( 0 == option )
+    {
+        LLSD payload = notification["payload"];
+        std::string url = payload["url"].asString();
+        std::string escaped_url = LLWeb::escapeURL(url);
+        if (gViewerWindow)
+        {
+            gViewerWindow->getWindow()->spawnWebBrowser(escaped_url, async);
+        }
+    }
+    return false;
+}
+
+
+// static
+std::string LLWeb::escapeURL(const std::string& url)
+{
+    // The CURL curl_escape() function escapes colons, slashes,
+    // and all characters but A-Z and 0-9.  Do a cheesy mini-escape.
+    std::string escaped_url;
+    auto len = url.length();
+    for (size_t i = 0; i < len; i++)
+    {
+        char c = url[i];
+        if (c == ' ')
+        {
+            escaped_url += "%20";
+        }
+        else if (c == '\\')
+        {
+            escaped_url += "%5C";
+        }
+        else
+        {
+            escaped_url += c;
+        }
+    }
+    return escaped_url;
+}
+
+//static
+std::string LLWeb::expandURLSubstitutions(const std::string &url,
+                                          const LLSD &default_subs)
+{
+    LLSD substitution = default_subs;
+    substitution["VERSION"] = LLVersionInfo::instance().getVersion();
+    substitution["VERSION_MAJOR"] = LLVersionInfo::instance().getMajor();
+    substitution["VERSION_MINOR"] = LLVersionInfo::instance().getMinor();
+    substitution["VERSION_PATCH"] = LLVersionInfo::instance().getPatch();
+    substitution["VERSION_BUILD"] = std::to_string(LLVersionInfo::instance().getBuild());
+    substitution["CHANNEL"] = LLVersionInfo::instance().getChannel();
+    substitution["GRID"] = LLGridManager::getInstance()->getGridId();
+    substitution["GRID_LOWERCASE"] = utf8str_tolower(LLGridManager::getInstance()->getGridId());
+    substitution["OS"] = LLOSInfo::instance().getOSStringSimple();
+    substitution["SESSION_ID"] = gAgent.getSessionID();
+    substitution["FIRST_LOGIN"] = gAgent.isFirstLogin();
+
+    // work out the current language
+    std::string lang = LLUI::getLanguage();
+    if (lang == "en-us")
+    {
+        // *HACK: the correct fix is to change English.lproj/language.txt,
+        // but we're late in the release cycle and this is a less risky fix
+        lang = "en";
+    }
+    substitution["LANGUAGE"] = lang;
+
+    // find the region ID
+    LLUUID region_id;
+    LLViewerRegion *region = gAgent.getRegion();
+    if (region)
+    {
+        region_id = region->getRegionID();
+    }
+    substitution["REGION_ID"] = region_id;
+
+    // find the parcel local ID
+    S32 parcel_id = 0;
+    LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+    if (parcel)
+    {
+        parcel_id = parcel->getLocalID();
+    }
+    substitution["PARCEL_ID"] = llformat("%d", parcel_id);
+
+#ifdef OPENSIM // <FS:AW optional opensim support>
+    substitution["SLURL_TYPE"] = "fmw"; // <FS:AW  provide SLURL_TYPE url substitution>
+#endif // </FS:AW optional opensim support>
+
+    // find the grid
+    std::string current_grid = LLGridManager::getInstance()->getGridId();
+    std::transform(current_grid.begin(), current_grid.end(), current_grid.begin(), ::tolower);
+    if (current_grid == "damballah")
+    {
+      // Staging grid has its own naming scheme.
+      substitution["GRID"] = "secondlife-staging.com";
+    }
+    else
+    {
+        substitution["GRID"] = "secondlife.com";
+    }
+
+    // expand all of the substitution strings and escape the url
+    std::string expanded_url = url;
+    LLStringUtil::format(expanded_url, substitution);
+
+    return LLWeb::escapeURL(expanded_url);
+}
+
+//static
+bool LLWeb::useExternalBrowser(const std::string&)
+{
+    return true;
+}
