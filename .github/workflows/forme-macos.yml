@@ -40,7 +40,7 @@ jobs:
           echo "PYTHON=$(command -v python)" >> "$GITHUB_ENV"
           mkdir -p forme-macos-logs
           xcodebuild -version
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .autobuild-installables
           key: forme-macos-packages-${{ hashFiles('autobuild.xml', 'scripts/forme_client.py') }}
