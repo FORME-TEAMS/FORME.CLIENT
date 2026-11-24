@@ -1,5 +1,8 @@
 name: ForMe.World — macOS
 on:
+  pull_request:
+    branches:
+      - fix/forme-no-voice-preflight-missing-asset
   workflow_dispatch:
     inputs:
       grid_url:
@@ -21,7 +24,7 @@ jobs:
       AUTOBUILD_BUILD_ID: ${{ github.run_id }}
       AUTOBUILD_GITHUB_TOKEN: ${{ github.token }}
       AUTOBUILD_INSTALLABLE_CACHE: ${{ github.workspace }}/.autobuild-installables
-      FORME_WORLD_LOGIN_URI: ${{ inputs.grid_url }}
+      FORME_WORLD_LOGIN_URI: ${{ inputs.grid_url || 'http://185.173.93.200:8002/' }}
     steps:
       - uses: actions/checkout@v4
         with:
