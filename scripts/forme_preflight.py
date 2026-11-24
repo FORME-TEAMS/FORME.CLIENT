@@ -51,15 +51,22 @@ def main():
             except (ET.ParseError, OSError) as error:
                 errors.append(f'invalid character asset {rel}: {error}')
 
-    # Every control in settings.xml is loaded during startup and requires
-    # a non-empty Comment. Validate all controls, not only the last reported one.
-    settings_path = ROOT / 'indra/newview/app_settings/settings.xml'
-    try:
-        settings_root = ET.parse(settings_path).getroot()
-        settings_map = settings_root.find('map')
-        if settings_map is None:
-            errors.append('settings.xml: root LLSD map is missing')
-        else:
+    # Every default settings file loaded at startup must define a non-empty
+    # Comment for each LLControlVariable. Validate the full default settings set.
+    settings_paths = (
+        'indra/newview/app_settings/settings.xml',
+        'indra/newview/app_settings/settings_per_account.xml',
+        'indra/newview/app_settings/settings_crash_behavior.xml',
+        'indra/newview/app_settings/ignorable_dialogs.xml',
+    )
+    for rel in settings_paths:
+        settings_path = ROOT / rel
+        try:
+            settings_root = ET.parse(settings_path).getroot()
+            settings_map = settings_root.find('map')
+            if settings_map is None:
+                errors.append(f'{rel}: root LLSD map is missing')
+                continue
             entries = list(settings_map)
             for index in range(0, len(entries) - 1, 2):
                 key_node, control_map = entries[index:index + 2]
@@ -70,7 +77,6 @@ def main():
                     fields[i].text for i in range(0, len(fields) - 1, 2)
                     if fields[i].tag == 'key'
                 }
-                # Only LLControlVariable maps have the standard Type/Persist/Value fields.
                 if not {'Type', 'Persist', 'Value'}.issubset(field_names):
                     continue
                 comment = next((
@@ -79,11 +85,11 @@ def main():
                 ), None)
                 if comment is None or comment.tag != 'string' or not (comment.text or '').strip():
                     errors.append(
-                        f'settings.xml: control {key_node.text or "<unnamed>"} '
+                        f'{rel}: control {key_node.text or "<unnamed>"} '
                         'must have a non-empty Comment'
                     )
-    except (ET.ParseError, OSError) as error:
-        errors.append(f'invalid settings.xml: {error}')
+        except (ET.ParseError, OSError) as error:
+            errors.append(f'invalid {rel}: {error}')
 
     # Check literal entries in source/header lists against the complete Git tree,
     # including in sparse working copies. Generated variable paths are skipped.
