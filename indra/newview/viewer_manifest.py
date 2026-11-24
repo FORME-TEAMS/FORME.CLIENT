@@ -178,9 +178,11 @@ class ViewerManifest(LLManifest,FSViewerManifest):
 
 
             with self.prefix(src_dst="character"):
-                self.path("*.llm")
+                # Optional character assets: copy when present, but do not fail
+                # packaging when this checkout does not include these asset sets.
+                self.path_optional("*.llm")
                 self.path("*.xml")
-                self.path("*.tga")
+                self.path_optional("*.tga")
 
             # Include our fonts
             # <FS:Ansariel> Don't copy fonts to the source folder
