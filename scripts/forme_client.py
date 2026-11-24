@@ -108,12 +108,14 @@ def verify_universal_app(app):
         for name in files:
             path = Path(root) / name
             description = subprocess.run(
-                ['file', '-b', path], capture_output=True, text=True, check=True
+                ['file', '-b', path], capture_output=True, text=True,
+                encoding='utf-8', errors='replace', check=True
             ).stdout
             if 'Mach-O' not in description:
                 continue
             result = subprocess.run(
-                ['lipo', '-archs', path], capture_output=True, text=True
+                ['lipo', '-archs', path], capture_output=True, text=True,
+                encoding='utf-8', errors='replace'
             )
             if result.returncode:
                 raise ValueError(f'Не удалось проверить архитектуры {path}: {result.stderr.strip()}')
