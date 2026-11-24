@@ -1,5 +1,8 @@
 name: ForMe.World — macOS
 on:
+  push:
+    branches:
+      - fix/macos-universal-vlc-plugins
   pull_request:
     branches:
       - fix/forme-no-voice-preflight-missing-asset
