@@ -92,9 +92,18 @@ def build(jobs):
 
 
 def verify_universal_app(app):
-    """Reject an app bundle containing any thin Mach-O binary."""
+    """Require a universal app and plugin host; allow thin optional VLC modules.
+
+    VLC ships architecture-specific codec plugins (for example the x86 MMX
+    plugin). Those modules are optional runtime extensions, not part of the
+    viewer's executable ABI. The loader can use modules matching the running
+    process architecture, so requiring every plugin to be a fat binary would
+    incorrectly reject an otherwise universal application.
+    """
     required = {'arm64', 'x86_64'}
+    vlc_plugins = Path('Contents/Resources/SLPlugin.app/Contents/Frameworks/plugins')
     checked = 0
+    thin_plugins = []
     for root, _, files in os.walk(app):
         for name in files:
             path = Path(root) / name
@@ -110,16 +119,30 @@ def verify_universal_app(app):
                 raise ValueError(f'Не удалось проверить архитектуры {path}: {result.stderr.strip()}')
             architectures = set(result.stdout.split())
             missing = required - architectures
+            relative = path.relative_to(app)
+            is_optional_vlc_plugin = vlc_plugins in relative.parents
+            if is_optional_vlc_plugin and missing:
+                if not (architectures & required):
+                    raise ValueError(
+                        f'VLC-плагин {path} не поддерживает arm64 или x86_64; '
+                        f'обнаружены: {", ".join(sorted(architectures))}'
+                    )
+                thin_plugins.append((path, architectures))
+                continue
             if missing:
                 raise ValueError(
-                    f'В {path} отсутствуют архитектуры: {", ".join(sorted(missing))}; '
-                    f'обнаружены: {", ".join(sorted(architectures))}'
+                    f'В обязательном бинарнике {path} отсутствуют архитектуры: '
+                    f'{", ".join(sorted(missing))}; обнаружены: {", ".join(sorted(architectures))}'
                 )
             checked += 1
     if checked == 0:
-        raise ValueError('В приложении не найдено ни одного Mach-O бинарника.')
-    print(f'ForMe.World: Universal Binary подтверждён для {checked} Mach-O файлов '
+        raise ValueError('В приложении не найдено ни одного обязательного Mach-O бинарника.')
+    print(f'ForMe.World: Universal Binary подтверждён для {checked} обязательных Mach-O файлов '
           '(arm64 + x86_64).')
+    if thin_plugins:
+        print(f'ForMe.World: оставлено {len(thin_plugins)} архитектурно-зависимых VLC-плагинов:')
+        for path, architectures in thin_plugins:
+            print(f'  {path}: {", ".join(sorted(architectures))}')
 
 
 def bundle():
