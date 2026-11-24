@@ -65,6 +65,30 @@ class UniversalBundleTests(unittest.TestCase):
                 str(self.plugin): "i386",
             })
 
+    def test_non_utf8_file_metadata_is_decoded_without_crashing(self):
+        calls = []
+
+        def fake_run(args, **kwargs):
+            calls.append((args[0], kwargs))
+            if args[0] == "file":
+                return SimpleNamespace(
+                    stdout="Mach-O 64-bit dynamically linked shared library \ufffd"
+                )
+            if args[0] == "lipo":
+                return SimpleNamespace(returncode=0, stdout="arm64 x86_64", stderr="")
+            raise AssertionError(args)
+
+        with patch("forme_client.subprocess.run", side_effect=fake_run):
+            verify_universal_app(self.app)
+
+        file_calls = [kwargs for command, kwargs in calls if command == "file"]
+        lipo_calls = [kwargs for command, kwargs in calls if command == "lipo"]
+        self.assertEqual(len(file_calls), 2)
+        self.assertEqual(len(lipo_calls), 2)
+        for kwargs in file_calls + lipo_calls:
+            self.assertEqual(kwargs.get("encoding"), "utf-8")
+            self.assertEqual(kwargs.get("errors"), "replace")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
