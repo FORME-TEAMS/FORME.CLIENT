@@ -51,23 +51,37 @@ def main():
             except (ET.ParseError, OSError) as error:
                 errors.append(f'invalid character asset {rel}: {error}')
 
-    # Every LLControlVariable needs a non-empty Comment. Keep this legacy
-    # compatibility setting covered because its omission aborts viewer startup.
+    # Every control in settings.xml is loaded during startup and requires
+    # a non-empty Comment. Validate all controls, not only the last reported one.
     settings_path = ROOT / 'indra/newview/app_settings/settings.xml'
     try:
         settings_root = ET.parse(settings_path).getroot()
-        settings_entries = list(settings_root.find('map') or [])
-        for index, entry in enumerate(settings_entries[:-1]):
-            if entry.tag == 'key' and entry.text == 'ShowVolumeSettingsPopup':
-                control_map = settings_entries[index + 1]
-                pairs = list(control_map)
-                comment = next((pairs[i + 1] for i, item in enumerate(pairs[:-1])
-                                if item.tag == 'key' and item.text == 'Comment'), None)
-                if comment is None or not (comment.text or '').strip():
-                    errors.append('settings.xml: ShowVolumeSettingsPopup must have a non-empty Comment')
-                break
+        settings_map = settings_root.find('map')
+        if settings_map is None:
+            errors.append('settings.xml: root LLSD map is missing')
         else:
-            errors.append('settings.xml: missing ShowVolumeSettingsPopup compatibility setting')
+            entries = list(settings_map)
+            for index in range(0, len(entries) - 1, 2):
+                key_node, control_map = entries[index:index + 2]
+                if key_node.tag != 'key' or control_map.tag != 'map':
+                    continue
+                fields = list(control_map)
+                field_names = {
+                    fields[i].text for i in range(0, len(fields) - 1, 2)
+                    if fields[i].tag == 'key'
+                }
+                # Only LLControlVariable maps have the standard Type/Persist/Value fields.
+                if not {'Type', 'Persist', 'Value'}.issubset(field_names):
+                    continue
+                comment = next((
+                    fields[i + 1] for i in range(0, len(fields) - 1, 2)
+                    if fields[i].tag == 'key' and fields[i].text == 'Comment'
+                ), None)
+                if comment is None or comment.tag != 'string' or not (comment.text or '').strip():
+                    errors.append(
+                        f'settings.xml: control {key_node.text or "<unnamed>"} '
+                        'must have a non-empty Comment'
+                    )
     except (ET.ParseError, OSError) as error:
         errors.append(f'invalid settings.xml: {error}')
 
