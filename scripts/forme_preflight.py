@@ -51,6 +51,26 @@ def main():
             except (ET.ParseError, OSError) as error:
                 errors.append(f'invalid character asset {rel}: {error}')
 
+    # Every LLControlVariable needs a non-empty Comment. Keep this legacy
+    # compatibility setting covered because its omission aborts viewer startup.
+    settings_path = ROOT / 'indra/newview/app_settings/settings.xml'
+    try:
+        settings_root = ET.parse(settings_path).getroot()
+        settings_entries = list(settings_root.find('map') or [])
+        for index, entry in enumerate(settings_entries[:-1]):
+            if entry.tag == 'key' and entry.text == 'ShowVolumeSettingsPopup':
+                control_map = settings_entries[index + 1]
+                pairs = list(control_map)
+                comment = next((pairs[i + 1] for i, item in enumerate(pairs[:-1])
+                                if item.tag == 'key' and item.text == 'Comment'), None)
+                if comment is None or not (comment.text or '').strip():
+                    errors.append('settings.xml: ShowVolumeSettingsPopup must have a non-empty Comment')
+                break
+        else:
+            errors.append('settings.xml: missing ShowVolumeSettingsPopup compatibility setting')
+    except (ET.ParseError, OSError) as error:
+        errors.append(f'invalid settings.xml: {error}')
+
     # Check literal entries in source/header lists against the complete Git tree,
     # including in sparse working copies. Generated variable paths are skipped.
     for rel in ('indra/cmake/CMakeLists.txt', 'indra/newview/CMakeLists.txt'):
