@@ -1,8 +1,5 @@
 name: ForMe.World — macOS
 on:
-  push:
-    branches:
-      - fix/macos-universal-vlc-plugins
   pull_request:
     branches:
       - fix/forme-no-voice-preflight-missing-asset
@@ -16,8 +13,8 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: forme-macos-${{ github.ref }}
-  cancel-in-progress: false
+  group: forme-macos-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   macos:
     runs-on: macos-15-intel
