@@ -2322,7 +2322,7 @@
     <key>AvatarSex</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Current avatar sex selection used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -3603,7 +3603,7 @@
     <key>CreateToolCopyCenters</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Whether the build tool copies the center position when duplicating objects.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -3614,7 +3614,7 @@
     <key>CreateToolCopyRotates</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Whether the build tool copies rotation when duplicating objects.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -3625,7 +3625,7 @@
     <key>CreateToolCopySelection</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Whether the build tool copies the current selection when duplicating objects.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -5858,7 +5858,7 @@
     <key>FreezeTime</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Freeze the displayed simulator time for viewer debugging.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -8674,7 +8674,7 @@
     <key>MouseSun</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Use the mouse to control the sun position in the environment editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -8685,7 +8685,7 @@
     <key>MouseMoon</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Use the mouse to control the moon position in the environment editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -14922,7 +14922,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>ShowNearClip</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Show the camera near clipping plane for rendering diagnostics.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -14979,7 +14979,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>ShowParcelOwners</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Show parcel ownership information in the viewer.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -14990,7 +14990,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>ShowPermissions</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Show object permission information in the viewer.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -15140,7 +15140,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>SkyOverrideSimSunPosition</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Override the simulator-provided sun position with the viewer environment setting.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -15964,7 +15964,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultEyesUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default eyes texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -15975,7 +15975,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultGlovesUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default gloves texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -15986,7 +15986,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultHairUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default hair texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -15997,7 +15997,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultJacketUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default jacket texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16008,7 +16008,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultPantsUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default pants texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16019,7 +16019,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultShirtUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default shirt texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16030,7 +16030,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultShoesUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default shoes texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16041,7 +16041,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultSkirtUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default skirt texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16052,7 +16052,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultSocksUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default socks texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16063,7 +16063,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultAlphaUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default alpha clothing texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16074,7 +16074,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgDefaultUnderwearUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the default underwear texture used by the appearance editor.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16085,7 +16085,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgTransparentUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the transparent texture used by viewer UI controls.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -16096,7 +16096,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UIImgInvisibleUUID</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Asset UUID for the invisible texture used by viewer UI controls.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -17227,7 +17227,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UseEnergy</key>
     <map>
       <key>Comment</key>
-      <string />
+      <string>Enable simulator energy usage rules for avatar movement.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -17422,8 +17422,8 @@ Change of this parameter will affect the layout of buttons in notification toast
 
     <key>SpeakerParticipantRemoveDelay</key>
     <map>
-
-
+      <key>Comment</key>
+      <string>Delay in seconds before removing a speaker from the participant list.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -18218,8 +18218,8 @@ Change of this parameter will affect the layout of buttons in notification toast
 
     <key>ShowVolumeSettingsPopup</key>
     <map>
-
-
+      <key>Comment</key>
+      <string>Legacy compatibility setting for the volume settings popup.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>

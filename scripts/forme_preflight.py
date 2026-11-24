@@ -51,6 +51,46 @@ def main():
             except (ET.ParseError, OSError) as error:
                 errors.append(f'invalid character asset {rel}: {error}')
 
+    # Every default settings file loaded at startup must define a non-empty
+    # Comment for each LLControlVariable. Validate the full default settings set.
+    settings_paths = (
+        'indra/newview/app_settings/settings.xml',
+        'indra/newview/app_settings/settings_per_account.xml',
+        'indra/newview/app_settings/settings_crash_behavior.xml',
+        'indra/newview/app_settings/ignorable_dialogs.xml',
+    )
+    for rel in settings_paths:
+        settings_path = ROOT / rel
+        try:
+            settings_root = ET.parse(settings_path).getroot()
+            settings_map = settings_root.find('map')
+            if settings_map is None:
+                errors.append(f'{rel}: root LLSD map is missing')
+                continue
+            entries = list(settings_map)
+            for index in range(0, len(entries) - 1, 2):
+                key_node, control_map = entries[index:index + 2]
+                if key_node.tag != 'key' or control_map.tag != 'map':
+                    continue
+                fields = list(control_map)
+                field_names = {
+                    fields[i].text for i in range(0, len(fields) - 1, 2)
+                    if fields[i].tag == 'key'
+                }
+                if not {'Type', 'Persist', 'Value'}.issubset(field_names):
+                    continue
+                comment = next((
+                    fields[i + 1] for i in range(0, len(fields) - 1, 2)
+                    if fields[i].tag == 'key' and fields[i].text == 'Comment'
+                ), None)
+                if comment is None or comment.tag != 'string' or not (comment.text or '').strip():
+                    errors.append(
+                        f'{rel}: control {key_node.text or "<unnamed>"} '
+                        'must have a non-empty Comment'
+                    )
+        except (ET.ParseError, OSError) as error:
+            errors.append(f'invalid {rel}: {error}')
+
     # Check literal entries in source/header lists against the complete Git tree,
     # including in sparse working copies. Generated variable paths are skipped.
     for rel in ('indra/cmake/CMakeLists.txt', 'indra/newview/CMakeLists.txt'):
@@ -153,6 +193,7 @@ def main():
         subprocess.run([str(binary)], check=True)
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_no_voice.py')])
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/test_mac_manifest.py')])
+    subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/test_universal_bundle.py')])
 
     if errors:
         print('\n'.join(errors), file=sys.stderr)
