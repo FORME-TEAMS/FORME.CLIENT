@@ -29,11 +29,13 @@
       <combo_box.item name="chat_type_shout" label="Qışqırtı" />
     </combo_box>
     <spinner name="ChatChannel" tool_tip="Söhbətə göndərmə kanalı. Aktiv etmək üçün: Seçimlər → Söhbət -&gt; Çap -&gt; Ümumi söhbət daxiletmə pəncərəsində kanal seçimini göstər." />
+    <layout_stack name="unread_messages_holder_stack" layout="topleft" orientation="vertical" height="20" width="352" border_size="0" animate="false">
     <layout_panel name="unread_messages_holder">
       <icon name="unread_messages_background" />
       <text name="unread_messages_text">
             Oxunmamış mesaj: [NUM]
           </text>
     </layout_panel>
+    </layout_stack>
   </panel>
 </floater>

@@ -220,8 +220,6 @@ bool LLPanelGroup::postBuild()
     mButtonApply->setEnabled(false);
 
 
-    mButtonCall->setClickedCallback(onBtnGroupCallClicked, this);
-
     mButtonChat = getChild<LLButton>("btn_chat");
     mButtonChat->setClickedCallback(onBtnGroupChatClicked, this);
 
@@ -295,7 +293,6 @@ void LLPanelGroup::reposButtons()
     reposButton(mButtonApply);
     reposButton(mButtonRefresh);
     reposButton(mButtonChat);
-    reposButton(mButtonCall);
     reposButton(mButtonActivate); // <FS:PP> FIRE-33939: Activate button
 }
 
@@ -340,12 +337,6 @@ void LLPanelGroup::onBtnApply(void* user_data)
     LLPanelGroup* self = static_cast<LLPanelGroup*>(user_data);
     self->apply();
     self->refreshData();
-}
-
-void LLPanelGroup::onBtnGroupCallClicked(void* user_data)
-{
-    LLPanelGroup* self = static_cast<LLPanelGroup*>(user_data);
-    self->callGroup();
 }
 
 void LLPanelGroup::onBtnGroupChatClicked(void* user_data)
@@ -476,8 +467,6 @@ void LLPanelGroup::setGroupID(const LLUUID& group_id)
     if(mButtonRefresh)
         mButtonRefresh->setVisible(!is_null_group_id);
 
-    if(mButtonCall)
-            mButtonCall->setVisible(!is_null_group_id);
     if(mButtonChat)
             mButtonChat->setVisible(!is_null_group_id);
 
@@ -556,8 +545,6 @@ void LLPanelGroup::setGroupID(const LLUUID& group_id)
         mGroupNameCtrl->setVisible(false);
         getChild<LLUICtrl>("group_name_editor")->setVisible(true);
 
-        if(mButtonCall)
-            mButtonCall->setVisible(false);
         if(mButtonChat)
             mButtonChat->setVisible(false);
     }
@@ -615,8 +602,6 @@ void LLPanelGroup::setGroupID(const LLUUID& group_id)
 
         if(mButtonApply)
             mButtonApply->setVisible(is_member);
-        if(mButtonCall)
-            mButtonCall->setVisible(is_member);
         if(mButtonChat)
             mButtonChat->setVisible(is_member);
     }
@@ -734,11 +719,6 @@ void LLPanelGroup::refreshData()
 
     mRefreshTimer.start();
     mRefreshTimer.setTimerExpirySec(5);
-}
-
-void LLPanelGroup::callGroup()
-{
-
 }
 
 void LLPanelGroup::chatGroup()

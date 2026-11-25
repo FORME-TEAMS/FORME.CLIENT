@@ -27,14 +27,18 @@
       <combo_box.item name="chat_type_shout" label="Crier" />
     </combo_box>
     <spinner name="ChatChannel" tool_tip="Canal dans lequel parler. Modifiable dans les Préférences -&gt; Conversations -&gt; Saisie -&gt; Afficher la sélection du canal de discussion." />
+    <layout_stack name="emoji_recent_layout_panel_stack" layout="topleft" orientation="vertical" height="28" width="352" border_size="0" animate="false">
     <layout_panel name="emoji_recent_layout_panel">
       <text name="emoji_recent_empty_text">
 						Les émojis récemment utilisés apparaîtront ici
 					</text>
     </layout_panel>
+    </layout_stack>
     <button name="emoji_recent_panel_toggle_btn" tool_tip="Affiche/masque les émojis récents" />
+    <layout_stack name="unread_messages_holder_stack" layout="topleft" orientation="vertical" height="20" width="352" border_size="0" animate="false">
     <layout_panel name="unread_messages_holder">
       <text name="unread_messages_text">Messages non lus : [NUM]</text>
     </layout_panel>
+    </layout_stack>
   </panel>
 </floater>

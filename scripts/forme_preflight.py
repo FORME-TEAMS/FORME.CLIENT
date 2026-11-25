@@ -220,6 +220,7 @@ def main():
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_window_layouts.py')])
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/test_approved_concepts.py')])
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_chat_names.py')])
+    subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_login_startup_ui.py')])
     print('ForMe preflight passed: source lists, text types, browser dependencies and packaging')
     return 0
 

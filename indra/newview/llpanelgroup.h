@@ -74,7 +74,6 @@ public:
 
     bool apply();
     void refreshData();
-    void callGroup();
     void chatGroup();
 
     virtual void reshape(S32 width, S32 height, bool called_from_parent = true);
@@ -102,7 +101,6 @@ protected:
 
     static void onBtnApply(void*);
     static void onBtnRefresh(void*);
-    static void onBtnGroupCallClicked(void*);
     static void onBtnGroupChatClicked(void*);
 
     void reposButton(LLButton* button);
@@ -127,7 +125,6 @@ protected:
     LLButton*       mButtonJoin = nullptr;
     LLButton*       mButtonActivate = nullptr;
     LLButton*       mButtonApply = nullptr;
-    LLButton*       mButtonCall = nullptr;
     LLButton*       mButtonChat = nullptr;
     LLButton*       mButtonRefresh = nullptr;
     LLUICtrl*       mJoinText;
