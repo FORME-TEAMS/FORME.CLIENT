@@ -178,11 +178,12 @@ class ViewerManifest(LLManifest,FSViewerManifest):
 
 
             with self.prefix(src_dst="character"):
-                # Optional character assets: copy when present, but do not fail
-                # packaging when this checkout does not include these asset sets.
-                self.path_optional("*.llm")
+                # Avatar meshes and baked texture inputs are required at runtime.
+                # A missing source asset must fail packaging instead of shipping
+                # a viewer whose avatar definitions reference absent files.
+                self.path("*.llm")
                 self.path("*.xml")
-                self.path_optional("*.tga")
+                self.path("*.tga")
 
             # Include our fonts
             # <FS:Ansariel> Don't copy fonts to the source folder
