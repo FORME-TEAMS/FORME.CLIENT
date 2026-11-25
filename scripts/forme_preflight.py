@@ -51,6 +51,19 @@ def main():
             except (ET.ParseError, OSError) as error:
                 errors.append(f'invalid character asset {rel}: {error}')
 
+    # Validate actual avatar-definition references, not just the XML container.
+    # Packaging globs alone cannot detect a partially missing asset set.
+    definition = ROOT / 'indra/newview/character/avatar_lad.xml'
+    try:
+        for node in ET.parse(definition).getroot().iter():
+            for value in node.attrib.values():
+                if value.lower().endswith(('.llm', '.tga')):
+                    rel = 'indra/newview/character/' + value
+                    if rel not in tracked or not (ROOT / rel).is_file():
+                        errors.append(f'missing referenced avatar asset {rel}')
+    except (ET.ParseError, OSError):
+        pass  # Reported by the definition check above.
+
     # Every default settings file loaded at startup must define a non-empty
     # Comment for each LLControlVariable. Validate the full default settings set.
     settings_paths = (

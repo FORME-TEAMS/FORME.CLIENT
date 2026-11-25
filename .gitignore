@@ -49,7 +49,7 @@ indra/newview/app_settings/static_*.db2
 indra/newview/avatar_icons_cache.txt
 indra/newview/avatar_lad.log
 indra/newview/browser_profile
-indra/newview/character
+# Built-in character meshes and texture inputs belong in source control.
 indra/newview/dbghelp.dll
 indra/newview/filters.xml
 indra/newview/fmod.dll
@@ -136,3 +136,8 @@ build-variables/
 .autobuild-installables/
 dist/
 forme-macos-logs/
+
+# CMake/manifest runtime resources, not generated build files.
+!indra/newview/res/viewerRes.rc
+!indra/newview/res/firestorm_icon.png
+!indra/newview/res-sdl/firestorm_icon.png
