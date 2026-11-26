@@ -3813,9 +3813,6 @@ void process_agent_movement_complete(LLMessageSystem* msg, void**)
 {
     LL_INFOS("Teleport","Messaging") << "Received ProcessAgentMovementComplete" << LL_ENDL;
 
-    gShiftFrame = true;
-    gAgentMovementCompleted = true;
-
     LLUUID agent_id;
     msg->getUUIDFast(_PREHASH_AgentData, _PREHASH_AgentID, agent_id);
     LLUUID session_id;
@@ -3877,6 +3874,9 @@ void process_agent_movement_complete(LLMessageSystem* msg, void**)
         return;
     }
     // </FS:Ansariel>
+
+    gShiftFrame = true;
+    gAgentMovementCompleted = true;
 
     LL_INFOS("Teleport","Messaging") << "Changing home region to region id " << regionp->getRegionID() << " handle " << region_handle << " == x,y " << x << "," << y << LL_ENDL;
 

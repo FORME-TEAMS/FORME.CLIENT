@@ -23,12 +23,12 @@
 #include "llinventorytype.h"
 #include "llsearcheditor.h"
 #include "llscrollcontainer.h"
+#include "llstring.h"
 #include "lltextbox.h"
 #include "llviewerinventory.h"
 #include "llwearabletype.h"
 #include "lldate.h"
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <set>
 
@@ -79,11 +79,23 @@ private:
 namespace
 {
 constexpr S32 CARD_COUNT = 20;
-std::string lower(std::string value)
+
+std::string lowercaseInventoryText(const std::string& value)
 {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return value;
+    LLWString text = utf8str_to_wstring(value);
+    LLWStringUtil::toLower(text);
+    // The C locale leaves Russian letters unchanged.
+    constexpr llwchar upper_a = U'А';
+    constexpr llwchar upper_ya = U'Я';
+    constexpr llwchar upper_yo = U'Ё';
+    for (auto& character : text)
+    {
+        if (character >= upper_a && character <= upper_ya) character += U'а' - U'А';
+        else if (character == upper_yo) character = U'ё';
+    }
+    return wstring_to_utf8str(text);
 }
+
 void collectItems(const LLUUID& folder, std::vector<LLUUID>& output, std::set<LLUUID>& visited)
 {
     if (folder.isNull() || !visited.insert(folder).second) return;
@@ -104,7 +116,7 @@ bool FSForMeInventoryBrowser::postBuild()
     gInventory.addObserver(this);
     mAvatarPreview = new FSForMeInventoryAvatarPreview();
     getChild<LLSearchEditor>("query")->setCommitCallback([this](LLUICtrl*, const LLSD&) {
-        mQuery = getChild<LLSearchEditor>("query")->getValue().asString();
+        mQuery = lowercaseInventoryText(getChild<LLSearchEditor>("query")->getValue().asString());
         mPage = 0; mDirty = true;
     });
     getChild<LLButton>("avatar_reset")->setClickedCallback([this](LLUICtrl*, const LLSD&) {
@@ -309,14 +321,14 @@ bool FSForMeInventoryBrowser::matches(const LLViewerInventoryItem* item) const
     if (mCategory == "clothing" && type != LLAssetType::AT_CLOTHING && type != LLAssetType::AT_BODYPART) return false;
     if (mCategory == "shoes" && (type != LLAssetType::AT_CLOTHING || item->getWearableType() != LLWearableType::WT_SHOES)) return false;
     if (mCategory == "hair" && (type != LLAssetType::AT_BODYPART || item->getWearableType() != LLWearableType::WT_HAIR)) return false;
-    if (mCategory == "tattoos" && (type != LLAssetType::AT_BODYPART || item->getWearableType() != LLWearableType::WT_SKIN)) return false;
+    if (mCategory == "tattoos" && (type != LLAssetType::AT_CLOTHING || item->getWearableType() != LLWearableType::WT_TATTOO)) return false;
     if (mCategory == "jewelry" && type != LLAssetType::AT_OBJECT) return false;
-    if (mCategory == "accessories" && (type != LLAssetType::AT_OBJECT || item->getInventoryType() != LLInventoryType::IT_WEARABLE)) return false;
-    if (mCategory == "objects" && (type != LLAssetType::AT_OBJECT || item->getInventoryType() == LLInventoryType::IT_WEARABLE)) return false;
+    if (mCategory == "accessories" && (type != LLAssetType::AT_OBJECT || item->getInventoryType() != LLInventoryType::IT_ATTACHMENT)) return false;
+    if (mCategory == "objects" && (type != LLAssetType::AT_OBJECT || item->getInventoryType() == LLInventoryType::IT_ATTACHMENT)) return false;
     if (mCategory == "animations" && type != LLAssetType::AT_ANIMATION && type != LLAssetType::AT_GESTURE) return false;
     if (mCategory == "favorites" && !get_is_favorite(item->getUUID())) return false;
     if (mCategory == "recent" && std::find(mRecentItems.begin(), mRecentItems.end(), item->getUUID()) == mRecentItems.end()) return false;
-    return mQuery.empty() || lower(item->getName()).find(lower(mQuery)) != std::string::npos;
+    return mQuery.empty() || lowercaseInventoryText(item->getName()).find(mQuery) != std::string::npos;
 }
 void FSForMeInventoryBrowser::rebuild()
 {
@@ -333,7 +345,7 @@ void FSForMeInventoryBrowser::rebuild()
     {
         std::sort(all.begin(), all.end(), [](const LLUUID& a, const LLUUID& b) {
             const auto* left = gInventory.getItem(a); const auto* right = gInventory.getItem(b);
-            return left && right ? lower(left->getName()) < lower(right->getName()) : a.asString() < b.asString();
+            return left && right ? lowercaseInventoryText(left->getName()) < lowercaseInventoryText(right->getName()) : a < b;
         });
         for (const auto& id : all) if (matches(gInventory.getItem(id))) mVisibleItems.push_back(id);
     }

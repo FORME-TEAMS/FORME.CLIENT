@@ -288,6 +288,7 @@ private:
     std::array<RegionPhoto, REGION_DETAIL_PHOTO + 1> mRegionPhotos;
 
     LLSD mRegionCards;
+    std::string mRegionCardQuery;
     S32 mRegionCardOffset = 0;
     S32 mSelectedRegionCard = -1;
     U64 mRegionCardRequest = 0;
