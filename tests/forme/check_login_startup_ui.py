@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (C) 2026, ForMe.World contributors.
 # SPDX-License-Identifier: LGPL-2.1-only
-"""Validate the group/chat/font resources instantiated before the first UDP login."""
+"""Validate UI resources instantiated before the first UDP login."""
 from pathlib import Path
 import re
 import unittest
@@ -20,15 +20,25 @@ class LoginStartupUI(unittest.TestCase):
             self.assertIsNone(re.search(r'\b(?:mButtonCall|onBtnGroupCallClicked|callGroup)\b', source), filename)
         self.assertIn('LLGroupActions::startIM(getID())', (NV / 'llpanelgroup.cpp').read_text())
 
-    def test_chat_layout_panels_can_be_created_by_their_parent_registry(self):
+    def test_layout_panels_can_be_created_by_their_parent_registry(self):
+        for filename in ('floater_fs_nearby_chat.xml', 'floater_world_map.xml'):
+            for path in (NV / 'skins').glob(f'*/xui/*/{filename}'):
+                root = ET.parse(path).getroot()
+                for parent in root.iter():
+                    for child in parent.findall('layout_panel'):
+                        with self.subTest(path=path.relative_to(NV), panel=child.get('name')):
+                            self.assertEqual('layout_stack', parent.tag)
+
+    def test_text_uses_supported_font_style_parameter(self):
         for path in (NV / 'skins').glob('*/xui/*/floater_fs_nearby_chat.xml'):
             root = ET.parse(path).getroot()
-            for parent in root.iter():
-                for child in parent:
-                    if child.tag == 'layout_panel':
-                        self.assertEqual('layout_stack', parent.tag, (path, child.get('name')))
             title = root.find(".//*[@name='forme_chat_title'][@font_style]")
             self.assertIsNone(title, (path, 'unsupported font_style parameter'))
+        for path in (NV / 'skins').glob('*/xui/*/floater_world_map.xml'):
+            root = ET.parse(path).getroot()
+            with self.subTest(path=path.relative_to(NV)):
+                self.assertEqual([], [el.get('name') for el in root.findall('.//text[@font_style]')],
+                                 'Use font.style for text font styles')
 
     def test_custom_font_sizes_exist_in_actual_installed_font_profiles(self):
         # LLFontGL tries install_dir/fonts first, not the skin fallback fonts.xml.

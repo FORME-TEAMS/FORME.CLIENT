@@ -1374,7 +1374,9 @@ S32 LLAppearanceMgr::getCOFVersion() const
 
 void LLAppearanceMgr::initCOFID()
 {
-    mCOFID = gInventory.findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT);
+    // Initial wearables can arrive while startup is still creating this folder.
+    mCOFID = gInventory.findExistingCategoryUUIDForTypeInRoot(
+        LLFolderType::FT_CURRENT_OUTFIT, gInventory.getRootFolderID());
 }
 
 bool LLAppearanceMgr::ensureCOF()

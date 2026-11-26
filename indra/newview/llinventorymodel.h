@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "formesystemfolders.h"
 #include "llassettype.h"
 #include "llfoldertype.h"
 #include "llframetimer.h"
@@ -240,13 +241,15 @@ private:
     //--------------------------------------------------------------------
 public:
     static bool getIsFirstTimeInViewer2();
-    static bool  isSysFoldersReady() { return (sPendingSystemFolders == 0); }
+    using SystemFolders = forme::SystemFolders<LLFolderType::EType>;
+    SystemFolders::Status getSystemFolderStatus() const;
+    void resetSystemFolderTracking();
 
 private:
     static bool sFirstTimeInViewer2;
     const static S32 sCurrentInvCacheVersion; // expected inventory cache version
 
-    static S32 sPendingSystemFolders;
+    SystemFolders mSystemFolders;
 
 /**                    Initialization/Setup
  **                                                                            **
@@ -344,10 +347,16 @@ public:
     //--------------------------------------------------------------------
 public:
 
-    // Checks if category exists ("My Inventory" only), if it does not, creates it
-    void ensureCategoryForTypeExists(LLFolderType::EType preferred_type);
+    // Finds or creates a category in "My Inventory". A null UUID reports failure.
+    void ensureCategoryForTypeExists(LLFolderType::EType preferred_type,
+                                    inventory_func_type callback = nullptr);
 
     const LLUUID findCategoryUUIDForTypeInRoot(
+        LLFolderType::EType preferred_type,
+        const LLUUID& root_id) const;
+
+    // Returns a null UUID for a missing folder, including during inventory startup.
+    LLUUID findExistingCategoryUUIDForTypeInRoot(
         LLFolderType::EType preferred_type,
         const LLUUID& root_id) const;
 
