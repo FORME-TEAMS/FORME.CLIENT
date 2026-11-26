@@ -41,6 +41,7 @@ private:
     void setCategory(const std::string& category);
     bool matchesCategory(const LLViewerInventoryItem* item) const;
     void removeWornItem(S32 index);
+    void wearSavedOutfit(const LLUUID& outfit_id);
     void saveOutfit();
     void compareOutfits();
     void updateSelectedOutfitDetails();
@@ -48,6 +49,7 @@ private:
     void adjustCameraZoom(F32 delta);
     void drawAvatarPreview();
     std::vector<LLUUID> mWornItems;
+    U64 mWearRequest = 0;
     S32 mSavedOutfitCount = 0;
     S32 mLookbookPage = 0;
     bool mLookbookPreviewMode = false;

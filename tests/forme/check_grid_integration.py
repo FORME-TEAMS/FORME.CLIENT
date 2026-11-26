@@ -62,6 +62,12 @@ for path in ['indra/newview/llstartup.cpp','indra/newview/llurldispatcher.cpp']:
     assert 'ForMeGrid::localRegion(slurl.getRegion())' in source(path)
 for path in ['indra/newview/llworld.cpp','indra/newview/llviewermessage.cpp']:
     assert 'ForMeGrid::allowedSimulator(' in source(path)
+
+movement = body('indra/newview/llviewermessage.cpp', 'void process_agent_movement_complete(')
+for flag in ('gAgentMovementCompleted = true;', 'gShiftFrame = true;'):
+    assert movement.index('if (!gAgent.getRegion())') < movement.index(flag), (
+        'Movement completion may change state only after validating the agent, session and region', flag)
+
 assert 'ForMeGrid::allowedServiceURI(url)' in source('indra/newview/llviewerregion.cpp')
 for path in ROOT.glob('indra/newview/skins/*/xui/*/floater_preferences.xml'):
     root=ET.parse(path).getroot()

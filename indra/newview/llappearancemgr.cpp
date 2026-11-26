@@ -1404,7 +1404,9 @@ bool LLAppearanceMgr::ensureCOF()
 
 const LLViewerInventoryItem* LLAppearanceMgr::getBaseOutfitLink()
 {
-    const LLUUID& current_outfit_cat = getCOF();
+    if (!ensureCOF()) return nullptr;
+
+    const LLUUID current_outfit_cat = getCOF();
     LLInventoryModel::cat_array_t cat_array;
     LLInventoryModel::item_array_t item_array;
     // Can't search on FT_OUTFIT since links to categories return FT_CATEGORY for type since they don't
@@ -2271,6 +2273,8 @@ void LLAppearanceMgr::updateCOF(LLInventoryModel::item_array_t& body_items_new,
     LL_INFOS("Avatar") << "starting" << LL_ENDL;
 // [/RLVa:KB]
 
+    if (!ensureCOF()) return;
+
     const LLUUID cof = getCOF();
 
     // Deactivate currently active gestures in the COF, if replacing outfit
@@ -2441,7 +2445,7 @@ void LLAppearanceMgr::updateCOF(LLInventoryModel::item_array_t& body_items_new,
     {
         dump_sequential_xml(gAgentAvatarp->getDebugName() + "_slam_request", contents);
     }
-    slam_inventory_folder(getCOF(), contents, link_waiter);
+    slam_inventory_folder(cof, contents, link_waiter);
 
     LL_DEBUGS("Avatar") << self_av_string() << "waiting for LLUpdateAppearanceOnDestroy" << LL_ENDL;
 }
@@ -2458,6 +2462,8 @@ void LLAppearanceMgr::updatePanelOutfitName(const std::string& name)
 
 void LLAppearanceMgr::createBaseOutfitLink(const LLUUID& category, LLPointer<LLInventoryCallback> link_waiter)
 {
+    if (!ensureCOF()) return;
+
     const LLUUID cof = getCOF();
     LLViewerInventoryCategory* catp = gInventory.getCategory(category);
     std::string new_outfit_name = "";
@@ -3434,6 +3440,7 @@ void LLAppearanceMgr::addCOFItemLink(const LLInventoryItem *item,
 LLInventoryModel::item_array_t LLAppearanceMgr::findCOFItemLinks(const LLUUID& item_id)
 {
     LLInventoryModel::item_array_t result;
+    if (!ensureCOF()) return result;
 
     LLUUID linked_id = gInventory.getLinkedItemID(item_id);
     LLInventoryModel::cat_array_t cat_array;
@@ -3442,12 +3449,11 @@ LLInventoryModel::item_array_t LLAppearanceMgr::findCOFItemLinks(const LLUUID& i
                                   cat_array,
                                   item_array,
                                   LLInventoryModel::EXCLUDE_TRASH);
-    for (S32 i=0; i<item_array.size(); i++)
+    for (const auto& item : item_array)
     {
-        const LLViewerInventoryItem* inv_item = item_array.at(i).get();
-        if (inv_item->getLinkedUUID() == linked_id)
+        if (item->getLinkedUUID() == linked_id)
         {
-            result.push_back(item_array.at(i));
+            result.push_back(item);
         }
     }
     return result;
@@ -3542,6 +3548,8 @@ private:
 void LLAppearanceMgr::removeCOFItemLinks(const LLUUID& item_id, LLPointer<LLInventoryCallback> cb, bool immediate_delete)
 // [/SL:KB]
 {
+    if (!ensureCOF()) return;
+
     gInventory.addChangedMask(LLInventoryObserver::LABEL, item_id);
 
     LLInventoryModel::cat_array_t cat_array;
@@ -3550,9 +3558,9 @@ void LLAppearanceMgr::removeCOFItemLinks(const LLUUID& item_id, LLPointer<LLInve
                                   cat_array,
                                   item_array,
                                   LLInventoryModel::EXCLUDE_TRASH);
-    for (S32 i=0; i<item_array.size(); i++)
+    for (const auto& inventory_item : item_array)
     {
-        const LLViewerInventoryItem* item = item_array.at(i).get();
+        const LLViewerInventoryItem* item = inventory_item.get();
         if (item->getIsLinkType() && item->getLinkedUUID() == item_id)
         {
 // [RLVa:KB] - Checked: 2013-02-12 (RLVa-1.4.8)
@@ -3582,6 +3590,8 @@ void LLAppearanceMgr::removeCOFItemLinks(const LLUUID& item_id, LLPointer<LLInve
 
 void LLAppearanceMgr::removeCOFLinksOfType(LLWearableType::EType type, LLPointer<LLInventoryCallback> cb)
 {
+    if (!ensureCOF()) return;
+
     LLFindWearablesOfType filter_wearables_of_type(type);
     LLInventoryModel::cat_array_t cats;
     LLInventoryModel::item_array_t items;
@@ -3606,7 +3616,6 @@ void LLAppearanceMgr::removeCOFLinksOfType(LLWearableType::EType type, LLPointer
 
 void LLAppearanceMgr::updateIsDirty()
 {
-    LLUUID cof = getCOF();
     LLUUID base_outfit;
 
     // find base outfit link
@@ -3631,7 +3640,7 @@ void LLAppearanceMgr::updateIsDirty()
 
         LLInventoryModel::cat_array_t cof_cats;
         LLInventoryModel::item_array_t cof_items;
-        gInventory.collectDescendentsIf(cof, cof_cats, cof_items,
+        gInventory.collectDescendentsIf(getCOF(), cof_cats, cof_items,
                                       LLInventoryModel::EXCLUDE_TRASH, collector);
 
         LLInventoryModel::cat_array_t outfit_cats;
@@ -4050,6 +4059,7 @@ bool LLAppearanceMgr::validateClothingOrderingInfo(LLUUID cat_id)
     // COF is processed if cat_id is not specified
     if (cat_id.isNull())
     {
+        if (!ensureCOF()) return false;
         cat_id = getCOF();
     }
 
@@ -4080,6 +4090,7 @@ void LLAppearanceMgr::updateClothingOrderingInfo(LLUUID cat_id,
     // COF is processed if cat_id is not specified
     if (cat_id.isNull())
     {
+        if (!ensureCOF()) return;
         cat_id = getCOF();
     }
 
@@ -4557,7 +4568,7 @@ std::string LLAppearanceMgr::getAppearanceServiceURL() const
     return gSavedSettings.getString("DebugAvatarAppearanceServiceURLOverride");
 }
 
-void show_created_outfit(LLUUID& folder_id, bool show_panel = true)
+void show_created_outfit(const LLUUID& folder_id, bool show_panel = true)
 {
     if (!LLApp::isRunning())
     {
@@ -4598,24 +4609,57 @@ void show_created_outfit(LLUUID& folder_id, bool show_panel = true)
 
 void LLAppearanceMgr::onOutfitFolderCreated(const LLUUID& folder_id, bool show_panel)
 {
-    LLPointer<LLInventoryCallback> cb =
-        new LLBoostFuncInventoryCallback(no_op_inventory_func,
-                                         boost::bind(&LLAppearanceMgr::onOutfitFolderCreatedAndClothingOrdered,this,folder_id,show_panel));
+    if (folder_id.isNull() || !ensureCOF())
+    {
+        LL_WARNS("Avatar") << "Cannot save outfit without an outfit folder and a current outfit" << LL_ENDL;
+        gAgentWearables.notifyLoadingFinished();
+        return;
+    }
+
+    const LLUUID session_id = gAgent.getSessionID();
+    LLPointer<LLInventoryCallback> cb = new LLBoostFuncInventoryCallback(no_op_inventory_func,
+        [folder_id, show_panel, session_id]
+        {
+            if (!gDisconnected && gAgent.getSessionID() == session_id)
+            {
+                LLAppearanceMgr::instance().onOutfitFolderCreatedAndClothingOrdered(folder_id, show_panel);
+            }
+        });
     updateClothingOrderingInfo(LLUUID::null, cb);
 }
 
 void LLAppearanceMgr::onOutfitFolderCreatedAndClothingOrdered(const LLUUID& folder_id, bool show_panel)
 {
-    LLPointer<LLInventoryCallback> cb =
-        new LLBoostFuncInventoryCallback(no_op_inventory_func,
-                                         boost::bind(show_created_outfit,folder_id,show_panel));
+    const auto* folder = gInventory.getCategory(folder_id);
+    if (!folder || folder->getOwnerID() != gAgent.getID() || folder->getPreferredType() != LLFolderType::FT_OUTFIT
+        || !ensureCOF())
+    {
+        gAgentWearables.notifyLoadingFinished();
+        return;
+    }
+
+    const LLUUID session_id = gAgent.getSessionID();
+    LLPointer<LLInventoryCallback> cb = new LLBoostFuncInventoryCallback(no_op_inventory_func,
+        [folder_id, show_panel, session_id]
+        {
+            if (!gDisconnected && gAgent.getSessionID() == session_id)
+            {
+                show_created_outfit(folder_id, show_panel);
+            }
+        });
     bool copy_folder_links = false;
     slamCategoryLinks(getCOF(), folder_id, copy_folder_links, cb);
 }
 
 void LLAppearanceMgr::makeNewOutfitLinks(const std::string& new_folder_name, bool show_panel)
 {
-    if (!isAgentAvatarValid()) return;
+    if (!isAgentAvatarValid() || !ensureCOF()) return;
+
+    // First, make a folder in the My Outfits directory.
+    const LLUUID parent_id = gInventory.findExistingCategoryUUIDForTypeInRoot(
+        LLFolderType::FT_MY_OUTFITS, gInventory.getRootFolderID());
+    const auto* parent = gInventory.getCategory(parent_id);
+    if (!parent || parent->getOwnerID() != gAgent.getID()) return;
 
     LLUIUsage::instance().logCommand("Avatar.CreateNewOutfit");
 
@@ -4623,16 +4667,17 @@ void LLAppearanceMgr::makeNewOutfitLinks(const std::string& new_folder_name, boo
 
     gAgentWearables.notifyLoadingStarted();
 
-    // First, make a folder in the My Outfits directory.
-    const LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS);
-
+    const LLUUID session_id = gAgent.getSessionID();
     gInventory.createNewCategory(
         parent_id,
         LLFolderType::FT_OUTFIT,
         new_folder_name,
-        [show_panel](const LLUUID &new_cat_id)
+        [show_panel, session_id](const LLUUID &new_cat_id)
         {
-            LLAppearanceMgr::getInstance()->onOutfitFolderCreated(new_cat_id, show_panel);
+            if (!gDisconnected && gAgent.getSessionID() == session_id)
+            {
+                LLAppearanceMgr::getInstance()->onOutfitFolderCreated(new_cat_id, show_panel);
+            }
         });
 }
 
@@ -5038,6 +5083,20 @@ protected:
     nullary_func_t mCallable;
 };
 
+static void callAfterInventoryItemsFetch(const uuid_vec_t& ids, const nullary_func_t& callback)
+{
+    auto* observer = new CallAfterCategoryFetchStage2(ids, callback);
+    observer->startFetch();
+    if (observer->isFinished())
+    {
+        observer->done();
+    }
+    else
+    {
+        gInventory.addObserver(observer);
+    }
+}
+
 class CallAfterCategoryFetchStage1: public LLInventoryFetchDescendentsObserver
 {
 public:
@@ -5136,7 +5195,7 @@ public:
         LLInventoryModel::item_array_t* items;
         gInventory.getDirectDescendentsOf(mComplete.front(), cats, items);
 
-        auto count = items->size();
+        auto count = items ? items->size() : 0;
         if(!count)
         {
             LL_WARNS() << "Nothing fetched in category " << mComplete.front()
@@ -5159,20 +5218,7 @@ public:
 
         gInventory.removeObserver(this);
 
-        // do the fetch
-        CallAfterCategoryFetchStage2 *stage2 = new CallAfterCategoryFetchStage2(ids, mCallable);
-        stage2->startFetch();
-        if(stage2->isFinished())
-        {
-            // everything is already here - call done.
-            stage2->done();
-        }
-        else
-        {
-            // it's all on it's way - add an observer, and the inventory
-            // will call done for us when everything is here.
-            gInventory.addObserver(stage2);
-        }
+        callAfterInventoryItemsFetch(ids, mCallable);
         delete this;
     }
 protected:
@@ -5223,19 +5269,49 @@ void callAfterCategoryFetch(const LLUUID& cat_id, nullary_func_t cb)
     }
 }
 
-void callAfterCategoryLinksFetch(const LLUUID &cat_id, nullary_func_t cb)
+void callAfterCategoryLinksFetch(const LLUUID& cat_id, nullary_func_t cb, bool fetch_legacy_targets)
 {
     if (AISAPI::isAvailable())
     {
         // Assume that we have no relevant cache. Fetch folder, and items folder's links point to.
         LLInventoryModelBackgroundFetch::getInstance()->fetchFolderAndLinks(cat_id, cb);
     }
+    else if (fetch_legacy_targets)
+    {
+        const LLUUID session_id = gAgent.getSessionID();
+        callAfterCategoryFetch(cat_id, [cat_id, cb, session_id]
+        {
+            if (gDisconnected || gAgent.getSessionID() != session_id) return;
+
+            LLInventoryModel::cat_array_t* categories = nullptr;
+            LLInventoryModel::item_array_t* items = nullptr;
+            gInventory.getDirectDescendentsOf(cat_id, categories, items);
+            uuid_vec_t linked_ids;
+            if (items)
+            {
+                for (const auto& item : *items)
+                {
+                    if (item.isNull() || item->getActualType() != LLAssetType::AT_LINK) continue;
+                    const auto* linked = item->getLinkedItem();
+                    const LLUUID id = item->getLinkedUUID();
+                    if ((!linked || !linked->isFinished()) && id.notNull()) linked_ids.push_back(id);
+                }
+            }
+            if (linked_ids.empty())
+            {
+                if (cb) cb();
+                return;
+            }
+            callAfterInventoryItemsFetch(linked_ids, [cb, session_id]
+            {
+                if (cb && !gDisconnected && gAgent.getSessionID() == session_id) cb();
+            });
+        });
+    }
     else
     {
-        LL_WARNS() << "AIS API v3 not available, can't use AISAPI::FetchCOF" << LL_ENDL;
         callAfterCategoryFetch(cat_id, cb);
     }
-
 }
 
 void add_wearable_type_counts(const uuid_vec_t& ids,

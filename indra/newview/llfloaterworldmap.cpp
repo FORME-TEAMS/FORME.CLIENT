@@ -475,7 +475,11 @@ bool LLFloaterWorldMap::postBuild()
     }
     auto* query = getChild<LLLineEditor>("forme_region_query");
     query->setCommitOnFocusLost(false);
-    query->setCommitCallback([this](LLUICtrl*, const LLSD&) { loadRegionCards(0); });
+    query->setCommitCallback([this](LLUICtrl*, const LLSD& value)
+    {
+        mRegionCardQuery = value.asString();
+        loadRegionCards(0);
+    });
 
     mMapView = dynamic_cast<LLWorldMapView*>(getChild<LLPanel>("objects_mapview"));
     mMapView->setForMeStyle(true);
@@ -2334,6 +2338,7 @@ void LLFloaterWorldMap::loadRegionCards(S32 offset, bool refresh)
     {
         setRegionCardsMode(true);
         mRegionCardOffset = offset;
+        mRegionCardsHaveMore = false;
         mRegionCards = LLSD::emptyArray();
         selectRegionCard(-1);
         for (S32 i = 0; i < 3; ++i)
@@ -2342,7 +2347,7 @@ void LLFloaterWorldMap::loadRegionCards(S32 offset, bool refresh)
     }
 
     const std::string url = std::string(ForMeGrid::LoginURI) + "api/web/public-regions?max=3&offset=" +
-        std::to_string(offset) + "&q=" + LLURI::escape(getChild<LLLineEditor>("forme_region_query")->getText());
+        std::to_string(offset) + "&q=" + LLURI::escape(mRegionCardQuery);
     const U64 request_id = ++mRegionCardRequest;
     const auto handle = getHandle();
     LLCoros::instance().launch("ForMeRegionCards", [handle, request_id, url]

@@ -34,6 +34,14 @@ ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / 'indra/newview/skins/default'
 source = (ROOT / 'indra/newview/llfloaterworldmap.cpp').read_text()
 source = re.sub(r'/\*[\s\S]*?\*/|//[^\n]*', '', source)
+request_cards = source.split('void LLFloaterWorldMap::loadRegionCards(', 1)[1].split(
+    'void LLFloaterWorldMap::showRegionCards(', 1)[0]
+assert 'LLURI::escape(mRegionCardQuery)' in request_cards, 'Region card requests must use the committed query'
+assert re.search(r'mRegionCardQuery = value\.asString\(\);\s*loadRegionCards\(0\);', source), (
+    'Committing a query must start it from the first page')
+new_page = request_cards.split('if (!refresh)', 1)[1].split('const std::string url', 1)[0]
+assert 'mRegionCardsHaveMore = false;' in new_page, 'A pending page must discard the previous page\'s continuation'
+
 textures = {el.get('name'): el.get('file_name') for el in ET.parse(BASE/'textures/textures.xml').getroot()}
 expected_buttons = {
     'forme_region_close', 'forme_region_map', 'forme_region_cards',

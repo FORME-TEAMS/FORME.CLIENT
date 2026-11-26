@@ -469,7 +469,8 @@ void LLInventoryModelBackgroundFetch::fetchFolderAndLinks(const LLUUID& cat_id, 
 
 void LLInventoryModelBackgroundFetch::fetchCOF(nullary_func_t callback)
 {
-    LLUUID cat_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT);
+    const LLUUID cat_id = gInventory.findExistingCategoryUUIDForTypeInRoot(
+        LLFolderType::FT_CURRENT_OUTFIT, gInventory.getRootFolderID());
     LLViewerInventoryCategory* cat = gInventory.getCategory(cat_id);
     if (cat)
     {
@@ -480,10 +481,9 @@ void LLInventoryModelBackgroundFetch::fetchCOF(nullary_func_t callback)
     mExpectedFolderIds.emplace_back(cat_id);
     // For reliability assume that we have no relevant cache, so
     // fetch cof along with items cof's links point to.
-    AISAPI::FetchCOF([callback](const LLUUID& id)
+    AISAPI::FetchCOF([callback, cat_id](const LLUUID& id)
                      {
-                         callback();
-                         LLUUID cat_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT);
+                         if (callback) callback();
                          LLInventoryModelBackgroundFetch::getInstance()->onAISFolderCalback(cat_id, id, FT_DEFAULT);
 
                          if (id.notNull())

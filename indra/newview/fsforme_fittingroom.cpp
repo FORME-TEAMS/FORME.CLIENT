@@ -3,6 +3,8 @@
  */
 #include "llviewerprecompiledheaders.h"
 #include "fsforme_fittingroom.h"
+#include "llagent.h"
+#include "llapp.h"
 #include "llappearancemgr.h"
 #include "lldynamictexture.h"
 #include "llviewercamera.h"
@@ -26,6 +28,7 @@
 #include <cstdio>
 
 #include "llinventorymodel.h"
+#include "llinventoryfunctions.h"
 #include "llinventorytype.h"
 #include "llwearabletype.h"
 #include "lllineeditor.h"
@@ -125,6 +128,55 @@ namespace
 {
 constexpr S32 WORN_ITEM_SLOTS = 16;
 constexpr S32 LOOKBOOK_THUMBNAIL_SLOTS = 4;
+
+LLUUID findMyOutfits()
+{
+    if (!gInventory.isInventoryUsable()) return LLUUID::null;
+    const LLUUID id = gInventory.findExistingCategoryUUIDForTypeInRoot(
+        LLFolderType::FT_MY_OUTFITS, gInventory.getRootFolderID());
+    const auto* folder = gInventory.getCategory(id);
+    return folder && folder->getOwnerID() == gAgent.getID() ? id : LLUUID::null;
+}
+
+LLViewerInventoryCategory* findSavedOutfit(const LLUUID& outfit_id)
+{
+    const LLUUID outfits_root = findMyOutfits();
+    auto* outfit = gInventory.getCategory(outfit_id);
+    if (outfits_root.isNull() || !outfit || outfit->getParentUUID() != outfits_root
+        || outfit->getOwnerID() != gAgent.getID()) return nullptr;
+    return outfit;
+}
+
+bool isSavedOutfitComplete(const LLUUID& outfit_id)
+{
+    std::vector<LLUUID> pending{outfit_id};
+    std::set<LLUUID> visited;
+    while (!pending.empty())
+    {
+        const LLUUID id = pending.back();
+        pending.pop_back();
+        if (!visited.insert(id).second || !gInventory.isCategoryComplete(id)) return false;
+
+        LLInventoryModel::cat_array_t* categories = nullptr;
+        LLInventoryModel::item_array_t* items = nullptr;
+        gInventory.getDirectDescendentsOf(id, categories, items);
+        if (!categories || !items) return false;
+
+        for (const auto& item : *items)
+        {
+            if (item.isNull() || !item->isFinished()) return false;
+            if (item->getActualType() != LLAssetType::AT_LINK) continue;
+            const auto* linked = item->getLinkedItem();
+            if (!linked || !linked->isFinished()) return false;
+        }
+        for (const auto& category : *categories)
+        {
+            if (category.isNull()) return false;
+            pending.push_back(category->getUUID());
+        }
+    }
+    return true;
+}
 
 std::string formeLookbookDirectory()
 {
@@ -316,15 +368,7 @@ bool FSForMeFittingRoom::postBuild()
             if ((*it)["id"].asString() != mSelectedLookbookId) continue;
             LLUUID outfit_id;
             outfit_id.set((*it)["outfit_id"].asString());
-            const LLUUID outfits_root = gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS);
-            LLViewerInventoryCategory* outfit = outfit_id.isNull() ? nullptr : gInventory.getCategory(outfit_id);
-            if (!outfit || outfit->getParentUUID() != outfits_root)
-            {
-                getChild<LLTextBox>("fitting_status")->setText(std::string("Связанный комплект больше не доступен в «Мои образы»."));
-                return;
-            }
-            LLAppearanceMgr::instance().wearInventoryCategoryOnAvatar(outfit, false);
-            getChild<LLTextBox>("fitting_status")->setText(std::string("Применяем комплект «") + outfit->getName() + "»…");
+            wearSavedOutfit(outfit_id);
             return;
         }
     });
@@ -424,12 +468,15 @@ bool FSForMeFittingRoom::postBuild()
     getChild<LLComboBox>("compare_outfit_b")->setCommitCallback([this](LLUICtrl*, const LLSD&) { compareOutfits(); });
     getChild<LLButton>("fitting_move_saved_to_trash")->setClickedCallback([this](LLUICtrl*, const LLSD&) {
         const LLUUID outfit_id = getChild<LLComboBox>("saved_outfits")->getSelectedValue().asUUID();
-        LLViewerInventoryCategory* outfit = gInventory.getCategory(outfit_id);
-        const LLUUID outfits_root = gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS);
-        if (!outfit || outfit->getParentUUID() != outfits_root)
+        if (!findSavedOutfit(outfit_id))
         {
             getChild<LLTextBox>("fitting_status")->setText(std::string("Выбранный образ больше не находится в папке «Мои образы»."));
             mDirty = true;
+            return;
+        }
+        if (!get_is_category_removable(&gInventory, outfit_id))
+        {
+            getChild<LLTextBox>("fitting_status")->setText(std::string("Этот образ нельзя переместить в Корзину."));
             return;
         }
         gInventory.removeCategory(outfit_id); // Moves the outfit to Trash; it is recoverable.
@@ -437,17 +484,7 @@ bool FSForMeFittingRoom::postBuild()
         mDirty = true;
     });
     getChild<LLButton>("fitting_wear_saved")->setClickedCallback([this](LLUICtrl*, const LLSD&) {
-        const LLUUID outfit_id = getChild<LLComboBox>("saved_outfits")->getSelectedValue().asUUID();
-        const LLUUID outfits_root = gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS);
-        LLViewerInventoryCategory* outfit = gInventory.getCategory(outfit_id);
-        if (!outfit || outfit->getParentUUID() != outfits_root)
-        {
-            getChild<LLTextBox>("fitting_status")->setText(std::string("Выбранный образ недоступен в папке «Мои образы»."));
-            mDirty = true;
-            return;
-        }
-        LLAppearanceMgr::instance().wearInventoryCategoryOnAvatar(outfit, false);
-        getChild<LLTextBox>("fitting_status")->setText(std::string("Применяем образ «") + outfit->getName() + "»…");
+        wearSavedOutfit(getChild<LLComboBox>("saved_outfits")->getSelectedValue().asUUID());
     });
     for (S32 i = 0; i < WORN_ITEM_SLOTS; ++i)
         getChild<LLButton>("worn_remove_" + std::to_string(i))->setClickedCallback([this, i](LLUICtrl*, const LLSD&) {
@@ -995,15 +1032,15 @@ void FSForMeFittingRoom::rebuild()
     compare_a->removeall();
     compare_b->removeall();
     mSavedOutfitCount = 0;
-    const LLUUID outfits_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS);
+    const LLUUID outfits_id = findMyOutfits();
     LLInventoryModel::cat_array_t* outfit_categories = nullptr;
     LLInventoryModel::item_array_t* outfit_items = nullptr;
-    gInventory.getDirectDescendentsOf(outfits_id, outfit_categories, outfit_items);
+    if (outfits_id.notNull()) gInventory.getDirectDescendentsOf(outfits_id, outfit_categories, outfit_items);
     if (outfit_categories)
     {
         std::vector<LLViewerInventoryCategory*> sorted_outfits;
         for (const auto& outfit : *outfit_categories)
-            if (outfit.notNull()) sorted_outfits.push_back(outfit);
+            if (outfit.notNull() && outfit->getOwnerID() == gAgent.getID()) sorted_outfits.push_back(outfit);
         std::sort(sorted_outfits.begin(), sorted_outfits.end(),
             [](const LLViewerInventoryCategory* left, const LLViewerInventoryCategory* right)
             {
@@ -1052,7 +1089,8 @@ void FSForMeFittingRoom::rebuild()
     }
     LLInventoryModel::cat_array_t* categories = nullptr;
     LLInventoryModel::item_array_t* items = nullptr;
-    gInventory.getDirectDescendentsOf(LLAppearanceMgr::instance().getCOF(), categories, items);
+    auto& appearance = LLAppearanceMgr::instance();
+    if (appearance.ensureCOF()) gInventory.getDirectDescendentsOf(appearance.getCOF(), categories, items);
     if (items)
         for (const auto& item : *items)
             if (item.notNull() && item->getIsLinkType() && matchesCategory(item)) mWornItems.push_back(item->getUUID());
@@ -1103,8 +1141,8 @@ void FSForMeFittingRoom::updateSelectedOutfitDetails()
         return;
     }
 
-    const LLViewerInventoryCategory* outfit = gInventory.getCategory(outfit_id);
-    if (!outfit || outfit->getParentUUID() != gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS))
+    const LLViewerInventoryCategory* outfit = findSavedOutfit(outfit_id);
+    if (!outfit)
     {
         getChild<LLTextBox>("saved_outfit_details")->setText(std::string("Сведения об образе недоступны."));
         return;
@@ -1135,15 +1173,53 @@ void FSForMeFittingRoom::removeWornItem(S32 index)
 {
     const S32 item_index = mWornPage * WORN_ITEM_SLOTS + index;
     if (index < 0 || index >= WORN_ITEM_SLOTS || item_index >= static_cast<S32>(mWornItems.size())) return;
-    LLAppearanceMgr::instance().removeItemFromAvatar(mWornItems[item_index]);
+    auto& appearance = LLAppearanceMgr::instance();
+    const auto* item = gInventory.getItem(mWornItems[item_index]);
+    if (isAgentAvatarValid() && appearance.ensureCOF() && item && item->getParentUUID() == appearance.getCOF())
+    {
+        appearance.removeItemFromAvatar(item->getUUID());
+    }
     mDirty = true;
+}
+
+void FSForMeFittingRoom::wearSavedOutfit(const LLUUID& outfit_id)
+{
+    const auto request = ++mWearRequest;
+    if (gDisconnected || !isAgentAvatarValid() || !findSavedOutfit(outfit_id))
+    {
+        getChild<LLTextBox>("fitting_status")->setText(std::string("Выбранный образ недоступен в папке «Мои образы»."));
+        return;
+    }
+
+    const auto handle = getHandle();
+    const LLUUID session = gAgent.getSessionID();
+    getChild<LLTextBox>("fitting_status")->setText(std::string("Загружаем выбранный образ…"));
+    callAfterCategoryLinksFetch(outfit_id, [handle, session, request, outfit_id]
+    {
+        auto* room = static_cast<FSForMeFittingRoom*>(handle.get());
+        if (!room || room->mWearRequest != request || session != gAgent.getSessionID()
+            || gDisconnected || !isAgentAvatarValid()) return;
+        ++room->mWearRequest;
+
+        auto* outfit = findSavedOutfit(outfit_id);
+        auto& appearance = LLAppearanceMgr::instance();
+        if (!outfit || !isSavedOutfitComplete(outfit_id) || !appearance.ensureCOF())
+        {
+            room->getChild<LLTextBox>("fitting_status")->setText(std::string("Не удалось загрузить выбранный образ."));
+            return;
+        }
+        room->getChild<LLTextBox>("fitting_status")->setText(std::string("Применяем образ «") + outfit->getName() + "»…");
+        appearance.wearInventoryCategoryOnAvatar(outfit, false);
+    }, /*fetch_legacy_targets=*/ true);
 }
 
 void FSForMeFittingRoom::compareOutfits()
 {
     const LLUUID first_id = getChild<LLComboBox>("compare_outfit_a")->getSelectedValue().asUUID();
     const LLUUID second_id = getChild<LLComboBox>("compare_outfit_b")->getSelectedValue().asUUID();
-    if (first_id.isNull() || second_id.isNull() || first_id == second_id)
+    const auto* first = findSavedOutfit(first_id);
+    const auto* second = findSavedOutfit(second_id);
+    if (!first || !second || first_id == second_id)
     {
         getChild<LLTextBox>("compare_summary")->setText(std::string("Выберите два разных сохранённых образа."));
         getChild<LLTextBox>("compare_only_a")->setText(std::string(""));
@@ -1199,10 +1275,8 @@ void FSForMeFittingRoom::compareOutfits()
     collect_names(second_id, first_items, only_second_names);
     const S32 only_first = static_cast<S32>(first_items.size()) - shared;
     const S32 only_second = static_cast<S32>(second_items.size()) - shared;
-    const auto* first = gInventory.getCategory(first_id);
-    const auto* second = gInventory.getCategory(second_id);
-    const std::string first_name = first ? first->getName() : "Образ A";
-    const std::string second_name = second ? second->getName() : "Образ B";
+    const std::string first_name = first->getName();
+    const std::string second_name = second->getName();
     auto format_names = [](const std::vector<std::string>& names, S32 total)
     {
         if (total == 0) return std::string("Нет уникальных предметов");
@@ -1236,7 +1310,12 @@ void FSForMeFittingRoom::saveOutfit()
     }
     const auto last = name.find_last_not_of(" \t\r\n");
     name = name.substr(first, last - first + 1);
-    const LLUUID outfits_root = gInventory.findCategoryUUIDForType(LLFolderType::FT_MY_OUTFITS);
+    const LLUUID outfits_root = findMyOutfits();
+    if (outfits_root.isNull() || !isAgentAvatarValid() || !LLAppearanceMgr::instance().ensureCOF())
+    {
+        getChild<LLTextBox>("fitting_status")->setText(std::string("Текущий образ или папка «Мои образы» ещё не готовы."));
+        return;
+    }
     LLInventoryModel::cat_array_t* outfit_categories = nullptr;
     LLInventoryModel::item_array_t* outfit_items = nullptr;
     gInventory.getDirectDescendentsOf(outfits_root, outfit_categories, outfit_items);
