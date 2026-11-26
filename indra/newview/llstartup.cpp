@@ -2780,6 +2780,9 @@ bool idle_startup()
         }
 
         LLInventoryModelBackgroundFetch::instance().start();
+        // The outfit already present in the skeleton must be available to
+        // initial-wearables callbacks while unrelated system folders load.
+        LLAppearanceMgr::instance().initCOFID();
         gInventory.createCommonSystemCategories();
         LLStartUp::setStartupState(STATE_INVENTORY_CALLBACKS );
         do_startup_frame();
