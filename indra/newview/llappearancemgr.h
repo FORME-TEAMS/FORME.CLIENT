@@ -118,6 +118,8 @@ public:
     const LLUUID getCOF() const;
     S32 getCOFVersion() const;
     void initCOFID();
+    // Resolve the loaded, agent-owned COF before traversing or editing it.
+    bool ensureCOF();
 
     // Debugging - get truncated LLSD summary of COF contents.
     LLSD dumpCOF() const;

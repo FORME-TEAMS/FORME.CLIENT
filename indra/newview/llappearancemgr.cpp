@@ -1377,6 +1377,29 @@ void LLAppearanceMgr::initCOFID()
     mCOFID = gInventory.findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT);
 }
 
+bool LLAppearanceMgr::ensureCOF()
+{
+    if (!gInventory.isInventoryUsable())
+    {
+        return false;
+    }
+
+    // Initial wearables/AIS callbacks can run before STATE_INVENTORY_CALLBACKS
+    // initializes mCOFID. A null UUID must never be used as a subtree root:
+    // it can collect unrelated personal and library items for COF cleanup.
+    auto is_current_outfit = [](const LLViewerInventoryCategory* cat)
+    {
+        return cat && cat->getPreferredType() == LLFolderType::FT_CURRENT_OUTFIT
+            && cat->getOwnerID() == gAgent.getID()
+            && cat->getParentUUID() == gInventory.getRootFolderID();
+    };
+    if (!is_current_outfit(gInventory.getCategory(mCOFID)))
+    {
+        initCOFID();
+    }
+    return mCOFID.notNull() && is_current_outfit(gInventory.getCategory(mCOFID));
+}
+
 const LLViewerInventoryItem* LLAppearanceMgr::getBaseOutfitLink()
 {
     const LLUUID& current_outfit_cat = getCOF();
@@ -2694,6 +2717,14 @@ void LLAppearanceMgr::updateAppearanceFromCOF(bool enforce_item_restrictions,
         return;
     }
 
+    if (!ensureCOF())
+    {
+        // Startup will fetch the COF and update appearance again once the
+        // inventory is ready. Do not repair/delete items in an absent folder.
+        LL_WARNS("Avatar") << "Appearance update skipped: current outfit folder is not ready" << LL_ENDL;
+        return;
+    }
+
     LL_DEBUGS("Avatar") << self_av_string() << "starting" << LL_ENDL;
 
     if (gInventory.hasPosiblyBrockenLinks())
@@ -2832,6 +2863,11 @@ void LLAppearanceMgr::updateAppearanceFromCOF(bool enforce_item_restrictions,
     dumpItemArray(obj_items,"asset_dump: obj_item");
 
     LLViewerInventoryCategory *cof = gInventory.getCategory(current_outfit_id);
+    if (!cof)
+    {
+        LL_WARNS("Avatar") << "Current outfit folder disappeared during appearance update" << LL_ENDL;
+        return;
+    }
     if (!gInventory.isCategoryComplete(current_outfit_id))
     {
         LL_WARNS() << "COF info is not complete. Version " << cof->getVersion()
@@ -5152,6 +5188,15 @@ void callAfterCOFFetch(nullary_func_t cb)
     else
     {
         LL_INFOS() << "AIS API v3 not available, using callAfterCategoryFetch" << LL_ENDL;
+        if (!LLAppearanceMgr::instance().ensureCOF())
+        {
+            LL_WARNS("Avatar") << "Cannot fetch missing current outfit folder" << LL_ENDL;
+            if (cb)
+            {
+                cb();
+            }
+            return;
+        }
         LLUUID cat_id = LLAppearanceMgr::instance().getCOF();
         LLViewerInventoryCategory* cat = gInventory.getCategory(cat_id);
 
