@@ -96,7 +96,6 @@ struct LLViewerInventoryCategory {
 struct Agent { LLUUID getID() const { return {1}; } } gAgent;
 struct Inventory {
     bool usable = true;
-    LLUUID selected{20};
     std::map<LLUUID, LLViewerInventoryCategory> categories;
     int lookups = 0, searches = 0;
     bool isInventoryUsable() const { return usable; }
@@ -106,9 +105,17 @@ struct Inventory {
         auto it = categories.find(id);
         return it == categories.end() ? nullptr : &it->second;
     }
-    LLUUID findCategoryUUIDForType(LLFolderType::EType) {
+    LLUUID findExistingCategoryUUIDForTypeInRoot(LLFolderType::EType type, const LLUUID& root) {
         ++searches;
-        return selected;
+        for (const auto& [id, category] : categories) {
+            if (category.getPreferredType() == type && category.getParentUUID() == root) return id;
+        }
+        return {};
+    }
+    LLUUID findCategoryUUIDForType(LLFolderType::EType type) {
+        const LLUUID id = findExistingCategoryUUIDForTypeInRoot(type, getRootFolderID());
+        assert(id.notNull() || !isInventoryUsable());
+        return id;
     }
 } gInventory;
 int accepted_updates = 0, category_fetches = 0;
@@ -146,6 +153,12 @@ void callAfterCategoryFetch(LLUUID id, nullary_func_t cb) {
 SCENARIOS = r'''
 int main() {
     auto& mgr = LLAppearanceMgr::instance();
+    // Startup may initialize COF before its folder exists. The strict lookup
+    // would assert here because the inventory is usable.
+    mgr.mCOFID = {999};
+    mgr.initCOFID();
+    assert(mgr.getCOF() == LLUUID{});
+
     // Regression: idle callback arrives before the manager's COF was initialized.
     // An existing folder is resolved, without waiting for unrelated folders.
     gInventory.categories[{20}] = {};

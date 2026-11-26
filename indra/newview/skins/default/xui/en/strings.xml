@@ -225,6 +225,8 @@ Please try logging in again in a minute.</string>
 If you feel this is an error, please contact support@secondlife.com</string>
 
 	<!-- Disconnection -->
+	<string name="LoginSystemFoldersFailed">Could not load the required inventory folders. Restart the viewer and try logging in again.</string>
+	<string name="LoginSystemFoldersTimedOut">Timed out while loading the required inventory folders. Restart the viewer and try logging in again.</string>
 	<string name="AgentLostConnection">This region may be experiencing trouble.  Please check your connection to the Internet.</string>
 	<string name="SavingSettings">Saving your settings...</string>
 	<string name="LoggingOut">Logging out...</string>

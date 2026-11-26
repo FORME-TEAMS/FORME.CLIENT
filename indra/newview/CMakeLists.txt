@@ -1227,6 +1227,7 @@ set(viewer_HEADER_FILES
     llfloatermap.h
     formegrouppaging.h
     formemarketpolicy.h
+    formesystemfolders.h
     fsmarketbrowser.h
     fsformeinventory.h
     fsforme_fittingroom.h

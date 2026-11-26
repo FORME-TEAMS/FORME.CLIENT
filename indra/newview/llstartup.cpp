@@ -2769,16 +2769,6 @@ bool idle_startup()
         // gInventory.mIsAgentInvUsable is set to true in the gInventory.buildParentChildMap.
         gInventory.buildParentChildMap();
 
-        // If buildParentChildMap succeeded, inventory will now be in
-        // a usable state and gInventory.isInventoryUsable() will be
-        // true.
-
-        // if inventory is unusable, show warning.
-        if (!gInventory.isInventoryUsable())
-        {
-            LLNotificationsUtil::add("InventoryUnusable");
-        }
-
         LLInventoryModelBackgroundFetch::instance().start();
         // The outfit already present in the skeleton must be available to
         // initial-wearables callbacks while unrelated system folders load.
@@ -2795,9 +2785,28 @@ bool idle_startup()
     //---------------------------------------------------------------------
     if (STATE_INVENTORY_CALLBACKS  == LLStartUp::getStartupState())
     {
-        if (!LLInventoryModel::isSysFoldersReady())
+        if (gDoDisconnect)
+        {
+            return false;
+        }
+
+        using FolderStatus = LLInventoryModel::SystemFolders::Status;
+        const auto folder_status = gInventory.getSystemFolderStatus();
+        if (folder_status == FolderStatus::Pending)
         {
             do_startup_frame();
+            return false;
+        }
+        if (folder_status != FolderStatus::Ready)
+        {
+            const bool timed_out = folder_status == FolderStatus::TimedOut;
+            LL_WARNS("AppInit") << (timed_out ? "Timed out waiting for required inventory folders"
+                                             : "Could not load required inventory folders") << LL_ENDL;
+            gInventory.resetSystemFolderTracking();
+            LLAppViewer* app = LLAppViewer::instance();
+            app->sendSimpleLogoutRequest();
+            app->forceDisconnect(LLTrans::getString(
+                timed_out ? "LoginSystemFoldersTimedOut" : "LoginSystemFoldersFailed"));
             return false;
         }
 
@@ -4176,6 +4185,7 @@ void LLStartUp::postStartupState()
 
 void reset_login()
 {
+    gInventory.resetSystemFolderTracking();
     gAgentWearables.cleanup();
     gAgentCamera.cleanup();
     gAgent.cleanup();
