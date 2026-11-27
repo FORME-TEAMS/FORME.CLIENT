@@ -70,25 +70,24 @@ void LLFloaterProfile::onClickCloseBtn(bool app_quitting)
 {
     if (!app_quitting)
     {
-        if (mPanelProfile->hasUnpublishedClassifieds())
+        const bool unpublished = mPanelProfile->hasUnpublishedClassifieds();
+        if (unpublished || mPanelProfile->hasUnsavedChanges())
         {
-            LLNotificationsUtil::add("ProfileUnpublishedClassified", LLSD(), LLSD(),
-                boost::bind(&LLFloaterProfile::onUnsavedChangesCallback, this, _1, _2, false));
-        }
-        else if (mPanelProfile->hasUnsavedChanges())
-        {
-            LLNotificationsUtil::add("ProfileUnsavedChanges", LLSD(), LLSD(),
-                boost::bind(&LLFloaterProfile::onUnsavedChangesCallback, this, _1, _2, true));
-        }
-        else
-        {
-            closeFloater();
+            const auto handle = getDerivedHandle<LLFloaterProfile>();
+            const LLUUID session_id = gAgent.getSessionID();
+            LLNotificationsUtil::add(unpublished ? "ProfileUnpublishedClassified" : "ProfileUnsavedChanges", LLSD(), LLSD(),
+                [handle, session_id, unpublished](const LLSD& notification, const LLSD& response)
+                {
+                    if (auto* floater = handle.get(); floater && !floater->isDead() && floater->getVisible()
+                        && session_id == gAgent.getSessionID())
+                    {
+                        floater->onUnsavedChangesCallback(notification, response, !unpublished);
+                    }
+                });
+            return;
         }
     }
-    else
-    {
-        closeFloater();
-    }
+    closeFloater();
 }
 
 void LLFloaterProfile::onUnsavedChangesCallback(const LLSD& notification, const LLSD& response, bool can_save)

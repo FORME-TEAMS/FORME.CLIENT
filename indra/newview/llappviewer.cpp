@@ -65,7 +65,6 @@
 #include "llslurl.h"
 #include "llstartup.h"
 #include "llfocusmgr.h"
-#include "llurlfloaterdispatchhandler.h"
 #include "llviewerjoystick.h"
 #include "llcalc.h"
 #include "llconversationlog.h"
@@ -1112,7 +1111,6 @@ bool LLAppViewer::init()
 
     // Load translations for tooltips
     LLFloater::initClass();
-    LLUrlFloaterDispatchHandler::registerInDispatcher();
 
     /////////////////////////////////////////////////
 

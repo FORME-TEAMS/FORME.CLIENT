@@ -164,6 +164,8 @@ protected:
 public:
     // The inventory model usage is sensitive to the initial construction of the model
     bool isInventoryUsable() const;
+    // HTTP requests may survive a login reset or disconnect.
+    static bool isInventoryRequestCurrent(const LLUUID& session_id);
     F32 getLibrarySkeletonLoadTime() const { return mLibrarySkeletonLoadTime; }
     F32 getAgentSkeletonLoadTime() const { return mAgentSkeletonLoadTime; }
 private:
@@ -566,7 +568,8 @@ protected:
     void addCategory(LLViewerInventoryCategory* category);
     void addItem(LLViewerInventoryItem* item);
 
-    void createNewCategoryCoro(std::string url, LLSD postData, inventory_func_type callback);
+    void createNewCategoryCoro(std::string url, LLSD postData, inventory_func_type callback,
+                               LLUUID session_id);
 
 /**                    Mutators
  **                                                                            **

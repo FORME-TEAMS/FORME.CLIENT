@@ -74,6 +74,9 @@ bool FSMarketBrowser::postBuild()
     });
     if (mMode == "catalog")
     {
+        if (const auto* region = gAgent.getRegion())
+            mCatalogRegionHandle = region->getHandle();
+        mCatalogRegionChange = gAgent.addRegionChangedCallback([this] { onCatalogRegionChange(); });
         getChild<LLSearchEditor>("query")->setCommitCallback([this](LLUICtrl*, const LLSD&) { mPage = 0; refresh(); });
         for (const auto& category : {std::make_pair("all", ""), std::make_pair("clothes", "apparel"), std::make_pair("home", "objects/home"), std::make_pair("accessories", "body/accessories")})
             getChild<LLButton>(category.first)->setClickedCallback([this, value = std::string(category.second)](LLUICtrl*, const LLSD&) { mCategory = value; mPage = 0; refresh(); });
@@ -108,6 +111,29 @@ void FSMarketBrowser::onOpen(const LLSD& key)
     mItemId = key["item_id"].asString(); mAgent = gAgent.getID(); mSession = gAgent.getSessionID(); mCap = capability();
     ++mRevision; mBusy = false; mProduct = LLSD(); mItems = LLSD::emptyArray(); refresh();
 }
+
+void FSMarketBrowser::onCatalogRegionChange()
+{
+    const auto* region = gAgent.getRegion();
+    if (isDead() || !region || mCatalogRegionHandle == region->getHandle())
+        return;
+
+    mCatalogRegionHandle = region->getHandle();
+    // A capability URL can be shared by several regions. Retire the request
+    // at the crossing even if no draw occurs before returning to this region.
+    ++mRevision;
+    mBusy = false;
+    mItems = LLSD::emptyArray();
+    mPage = 0;
+    mTotal = 0;
+    mCap = capability();
+    if (getVisible())
+    {
+        render();
+        status("Сессия или регион изменились. Нажмите «Обновить».");
+    }
+}
+
 void FSMarketBrowser::status(const std::string& message)
 {
     auto* label = getChild<LLTextBox>("status");

@@ -71,7 +71,6 @@ with the same filename but different name
   <texture name="Audio_Off" file_name="icons/Audio_Off.png" preload="false" />
   <texture name="Audio_Press" file_name="icons/Audio_Press.png" preload="false" />
 
-  <texture name="Avaline_Icon" file_name="icons/avaline_default_icon.jpg" preload="true" />
 
   <texture name="BackArrow_Off" file_name="icons/BackArrow_Off.png" preload="false" />
 
@@ -1014,7 +1013,6 @@ with the same filename but different name
   <texture name="Camera_btn" file_name="bottomtray/starlight_camera.png" preload="false" />
   <texture name="Gesture_btn" file_name="icons/Toolbar_Gesture_btn.png" preload="false" />
   <texture name="Sidebar_btn" file_name="icons/icn_toolbar_sidebar.png" preload="false" />
-  <texture name="Speaking_btn" file_name="icons/icn_toolbar_speak.png" preload="false" />
   <texture name="Build_btn" file_name="bottomtray/starlight_build.png" preload="false" />
   <texture name="Windlight_btn" file_name="icons/Inv_WindLight.png" preload="false" />
   <texture name="Prefs_btn" file_name="icons/Edit_Wrench.png" preload="false" />

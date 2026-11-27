@@ -224,6 +224,9 @@ def main():
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_appearance_startup.py')])
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_system_folders.py')])
     subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_inventory_audit.py')])
+    subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_inventory_transport.py')])
+    subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_profile_callbacks.py')])
+    subprocess.check_call([sys.executable, str(ROOT / 'tests/forme/check_market_catalog_context.py')])
     print('ForMe preflight passed: source lists, text types, browser dependencies and packaging')
     return 0
 
