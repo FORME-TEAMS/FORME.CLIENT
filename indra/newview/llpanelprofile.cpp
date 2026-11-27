@@ -461,8 +461,17 @@ void LLFloaterProfilePermissions::confirmModifyRights(bool grant)
 {
     LLSD args;
     args["NAME"] = LLSLURL("agent", mAvatarID, "completename").getSLURLString();
+    const auto handle = getDerivedHandle<LLFloaterProfilePermissions>();
+    const LLUUID session_id = gAgent.getSessionID();
     LLNotificationsUtil::add(grant ? "GrantModifyRights" : "RevokeModifyRights", args, LLSD(),
-        boost::bind(&LLFloaterProfilePermissions::rightsConfirmationCallback, this, _1, _2));
+        [handle, session_id](const LLSD& notification, const LLSD& response)
+        {
+            if (auto* floater = handle.get(); floater && !floater->isDead() && floater->getVisible()
+                && session_id == gAgent.getSessionID())
+            {
+                floater->rightsConfirmationCallback(notification, response);
+            }
+        });
 }
 
 void LLFloaterProfilePermissions::onCommitSeeOnlineRights()

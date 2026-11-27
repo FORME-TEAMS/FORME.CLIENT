@@ -1094,6 +1094,7 @@ void LLInventoryModel::createNewCategory(const LLUUID& parent_id,
         name.assign(LLViewerFolderType::lookupNewCategoryName(preferred_type));
     }
 
+    const LLUUID session_id = gAgent.getSessionID();
     if (AISAPI::isAvailable())
     {
         LLSD new_inventory = LLSD::emptyMap();
@@ -1105,13 +1106,13 @@ void LLInventoryModel::createNewCategory(const LLUUID& parent_id,
         AISAPI::CreateInventory(
             parent_id,
             new_inventory,
-            [this, callback, parent_id, preferred_type, name] (const LLUUID& new_category)
+            [this, callback, parent_id, preferred_type, name, session_id](const LLUUID& new_category)
         {
-            if (new_category.isNull())
+            if (new_category.isNull() || !isInventoryRequestCurrent(session_id))
             {
                 if (callback)
                 {
-                    callback(new_category);
+                    callback(LLUUID::null);
                 }
                 return;
             }
@@ -1165,7 +1166,7 @@ void LLInventoryModel::createNewCategory(const LLUUID& parent_id,
 
         LL_DEBUGS(LOG_INV) << "Creating category via request: " << ll_pretty_print_sd(request) << LL_ENDL;
         LLCoros::instance().launch("LLInventoryModel::createNewCategoryCoro",
-            boost::bind(&LLInventoryModel::createNewCategoryCoro, this, url, body, callback));
+            boost::bind(&LLInventoryModel::createNewCategoryCoro, this, url, body, callback, session_id));
         return;
     }
 
@@ -1175,8 +1176,19 @@ void LLInventoryModel::createNewCategory(const LLUUID& parent_id,
     }
 }
 
-void LLInventoryModel::createNewCategoryCoro(std::string url, LLSD postData, inventory_func_type callback)
+void LLInventoryModel::createNewCategoryCoro(std::string url, LLSD postData, inventory_func_type callback,
+                                              LLUUID session_id)
 {
+    auto fail = [&callback]
+    {
+        if (callback) callback(LLUUID::null);
+    };
+    if (!isInventoryRequestCurrent(session_id))
+    {
+        fail();
+        return;
+    }
+
     LLCore::HttpRequest::policy_t httpPolicy(LLCore::HttpRequest::DEFAULT_POLICY_ID);
     LLCoreHttpUtil::HttpCoroutineAdapter::ptr_t
         httpAdapter = std::make_shared<LLCoreHttpUtil::HttpCoroutineAdapter>("createNewCategoryCoro", httpPolicy);
@@ -1188,7 +1200,13 @@ void LLInventoryModel::createNewCategoryCoro(std::string url, LLSD postData, inv
 
     LL_INFOS("HttpCoroutineAdapter", "genericPostCoro") << "Generic POST for " << url << LL_ENDL;
 
-    LLSD result = httpAdapter->postAndSuspend(httpRequest, url, postData, httpOpts);
+    const LLSD result = httpAdapter->postAndSuspend(httpRequest, url, postData, httpOpts);
+
+    if (!isInventoryRequestCurrent(session_id) || !isInventoryUsable())
+    {
+        fail();
+        return;
+    }
 
     LLSD httpResults = result[LLCoreHttpUtil::HttpCoroutineAdapter::HTTP_RESULTS];
     LLCore::HttpStatus status = LLCoreHttpUtil::HttpCoroutineAdapter::getStatusFromLLSD(httpResults);
@@ -1196,24 +1214,20 @@ void LLInventoryModel::createNewCategoryCoro(std::string url, LLSD postData, inv
     if (!status)
     {
         LL_WARNS() << "HTTP failure attempting to create category." << LL_ENDL;
-        if (callback)
-        {
-            callback(LLUUID::null);
-        }
+        fail();
         return;
     }
 
-    if (!result.has("folder_id"))
+    const LLUUID categoryId = result["folder_id"].asUUID();
+    const LLUUID parent_id = result["parent_id"].asUUID();
+    if (categoryId.isNull() || parent_id.isNull() || parent_id != postData["parent_id"].asUUID()
+        || !result["type"].isInteger() || result["type"].asInteger() != postData["type"].asInteger()
+        || !result["name"].isString())
     {
-        LL_WARNS() << "Malformed response contents" << ll_pretty_print_sd(result) << LL_ENDL;
-        if (callback)
-        {
-            callback(LLUUID::null);
-        }
+        LL_WARNS() << "Malformed response creating an inventory category." << LL_ENDL;
+        fail();
         return;
     }
-
-    LLUUID categoryId = result["folder_id"].asUUID();
 
     LLViewerInventoryCategory* folderp = gInventory.getCategory(categoryId);
     if (!folderp)
@@ -1556,6 +1570,12 @@ bool LLInventoryModel::isInventoryUsable() const
         result = true;
     }
     return result;
+}
+
+bool LLInventoryModel::isInventoryRequestCurrent(const LLUUID& session_id)
+{
+    return !gDisconnected && !gDoDisconnect && gAgent.getRegion()
+        && session_id.notNull() && session_id == gAgent.getSessionID();
 }
 
 // Calling this method with an inventory item will either change an

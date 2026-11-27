@@ -56,6 +56,8 @@ assert {'AudioStreamingMusic', 'AudioLevelMusic', 'MuteMusic', 'AudioLevelMaster
 for path in (NV / 'skins').rglob('*.xml'):
     root = ET.parse(path).getroot()
     for node in root.iter():
+        if node.tag == 'texture':
+            assert node.get('name') not in ('Avaline_Icon', 'Speaking_btn'), (path, node.attrib)
         for key, value in node.attrib.items():
             assert not re.search(r'voice|vivox|webrtc|microphone|push_to_talk|SpeakBtn|start_call_button_tooltip|end_call_button_tooltip|group_call_btn|call_btn_lp', key + '=' + value, re.I), (path, key, value)
         assert not re.search(r'voice|output_monitor|chiclet_speaker|talk_button|speak_button', node.tag, re.I), (path, node.tag)

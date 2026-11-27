@@ -7,7 +7,8 @@ import re
 import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 NEWVIEW = ROOT / 'indra/newview'
-removed_modules = ('llviewerhelp', 'llviewerhelputil', 'llfloaterhelpbrowser', 'llfloaterhowto', 'llfloaterhud')
+removed_modules = ('llviewerhelp', 'llviewerhelputil', 'llfloaterhelpbrowser', 'llfloaterhowto', 'llfloaterhud',
+                   'llurlfloaterdispatchhandler')
 for name in removed_modules:
     for suffix in ('.cpp', '.h'):
         assert not (NEWVIEW / (name + suffix)).exists(), name
@@ -16,6 +17,14 @@ removed_reference = re.compile(rb'\b(?:' + b'|'.join(name.encode('ascii') for na
 for path in (ROOT / 'indra').rglob('*'):
     if path.is_file() and (path.suffix in ('.cpp', '.h', '.cmake') or path.name == 'CMakeLists.txt'):
         assert not removed_reference.search(path.read_bytes()), f'Reference to removed feature: {path}'
+
+viewer_window = (NEWVIEW / 'llviewerwindow.cpp').read_text()
+world_ui = viewer_window.split('void LLViewerWindow::initWorldUI()', 1)[1].split('void LLViewerWindow::shutdownViews()', 1)[0]
+world_ui = re.sub(r'/\*[\s\S]*?\*/|//[^\n]*', '', world_ui)
+for floater in ('destinations', 'avatar_welcome_pack', 'search', 'legacy_search', 'marketplace'):
+    assert not re.search(rf'LLFloaterReg::getInstance\(\s*"{floater}"', world_ui), (
+        'World UI must not preload legacy browser floaters', floater)
+
 removed = {'panel_preferences_colors.xml', 'panel_preferences_custom_colors.xml', 'floater_help_browser.xml', 'floater_how_to.xml', 'floater_hud.xml'}
 for path in (NEWVIEW / 'skins').rglob('*.xml'):
     assert path.name not in removed, path

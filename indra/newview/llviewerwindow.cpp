@@ -2523,46 +2523,6 @@ void LLViewerWindow::initWorldUI()
         gToolBarView->setVisible(true);
     }
 
-    // Don't preload cef instances on low end hardware
-    const F32Gigabytes MIN_PHYSICAL_MEMORY(8);
-    F32Gigabytes physical_mem = LLMemory::getMaxMemKB();
-    if (physical_mem <= 0)
-    {
-        LLMemory::updateMemoryInfo();
-        physical_mem = LLMemory::getMaxMemKB();
-    }
-
-    if (!gNonInteractive)
-    {
-        if (physical_mem > MIN_PHYSICAL_MEMORY)
-        {
-            LL_INFOS() << "Preloading cef instances" << LL_ENDL;
-
-            LLFloaterReg::getInstance("destinations");
-            LLFloaterReg::getInstance("avatar_welcome_pack");
-            // <FS:TJ> Preload the CEF instance of the currently used legacy search floater
-            //LLFloaterReg::getInstance("search");
-            if (gSavedSettings.getBOOL("FSUseFSLegacySearch"))
-            {
-                LLFloaterReg::getInstance("search");
-            }
-            else
-            {
-                LLFloaterReg::getInstance("legacy_search");
-            }
-            // </FS:TJ>
-            LLFloaterReg::getInstance("marketplace");
-        }
-        // <FS:Ansariel> OpenSim support
-        //else if (gSavedSettings.getBOOL("FirstLoginThisInstall"))
-        else if (LLGridManager::instance().isInSecondLife() && gSavedSettings.getBOOL("FirstLoginThisInstall"))
-        // </FS:Ansariel>
-        {
-            // Preload the welcome pack for first-time login even on low end hardware
-            LLFloaterReg::getInstance("avatar_welcome_pack");
-        }
-    }
-
     // <FS:Zi> Autohide main chat bar if applicable
     bool visible = !gSavedSettings.getBOOL("AutohideChatBar");
 

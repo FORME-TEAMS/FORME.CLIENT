@@ -92,16 +92,19 @@ private:
     typedef std::function<LLSD(LLCoreHttpUtil::HttpCoroutineAdapter::ptr_t, LLCore::HttpRequest::ptr_t,
         const std::string, LLSD, LLCore::HttpOptions::ptr_t, LLCore::HttpHeaders::ptr_t) > invokationFn_t;
 
-    static void EnqueueAISCommand(const std::string &procName, LLCoprocedureManager::CoProcedure_t proc);
+    static void EnqueueAISCommand(const std::string& procName, invokationFn_t invoke,
+        const std::string& url, const LLUUID& targetId, const LLSD& body,
+        const completion_t& callback, COMMAND_TYPE type);
     static void onIdle(void *userdata); // launches postponed AIS commands
-    static void onUpdateReceived(const LLSD& update, COMMAND_TYPE type, const LLSD& request_body);
+    static void onUpdateReceived(const LLSD& update, COMMAND_TYPE type, const LLSD& request_body,
+        const LLUUID& session_id);
 
     static std::string getInvCap();
     static std::string getLibCap();
 
     static void InvokeAISCommandCoro(LLCoreHttpUtil::HttpCoroutineAdapter::ptr_t httpAdapter,
         invokationFn_t invoke, std::string url, LLUUID targetId, LLSD body,
-        completion_t callback, COMMAND_TYPE type);
+        completion_t callback, COMMAND_TYPE type, const LLUUID& session_id);
 
     typedef std::pair<std::string, LLCoprocedureManager::CoProcedure_t> ais_query_item_t;
     static std::list<ais_query_item_t> sPostponedQuery;
@@ -110,7 +113,8 @@ private:
 class AISUpdate
 {
 public:
-    AISUpdate(const LLSD& update, AISAPI::COMMAND_TYPE type, const LLSD& request_body);
+    AISUpdate(const LLSD& update, AISAPI::COMMAND_TYPE type, const LLSD& request_body,
+        const LLUUID& session_id);
     void parseUpdate(const LLSD& update);
     void parseMeta(const LLSD& update);
     void parseContent(const LLSD& update);
@@ -162,6 +166,7 @@ private:
     static LLTimer sBatchTimer;
     static U32 sBatchFrameCount;
     AISAPI::COMMAND_TYPE mType;
+    const LLUUID mSessionID;
 };
 
 #endif

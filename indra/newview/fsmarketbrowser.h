@@ -15,6 +15,7 @@ public:
 private:
     FSMarketBrowser(const LLSD& key) : LLFloater(key) {}
     void refresh() override;
+    void onCatalogRegionChange();
     void render();
     void request(LLSD data, std::function<void(FSMarketBrowser*, const LLSD&)> done);
     void add(const LLSD& item);
@@ -27,5 +28,7 @@ private:
     LLSD mItems = LLSD::emptyArray(), mProduct, mRenderedCart;
     S32 mPage = 0, mTotal = 0;
     U64 mRevision = 0;
+    U64 mCatalogRegionHandle = 0;
     bool mBusy = false;
+    boost::signals2::scoped_connection mCatalogRegionChange;
 };
